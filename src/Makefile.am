@@ -1,2 +1,2 @@
 bin_PROGRAMS = ircssd
-ircssd_SOURCES = ircssd.c
+ircssd_SOURCES = main.c irc.c ss.c

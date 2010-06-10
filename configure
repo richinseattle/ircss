@@ -600,7 +600,7 @@ PACKAGE_VERSION='0.1'
 PACKAGE_STRING='ircss 0.1'
 PACKAGE_BUGREPORT='bugs@ircss.org'
 
-ac_unique_file="src/ircssd.c"
+ac_unique_file="src/irc.c"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>

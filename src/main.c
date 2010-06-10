@@ -20,6 +20,8 @@
 #include <getopt.h>
 #include <limits.h>
 #include <string.h>
+#include "irc.h"
+#include "ss.h"
 
 void print_version() {
   printf("ircssd v0.1\n");

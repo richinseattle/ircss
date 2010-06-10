@@ -4,7 +4,7 @@
 AC_PREREQ([2.63])
 AC_INIT([ircss], [0.1], [bugs@ircss.org])
 AM_INIT_AUTOMAKE(@PACKAGE_NAME@, @PACKAGE_VERSION@)
-AC_CONFIG_SRCDIR([src/ircssd.c])
+AC_CONFIG_SRCDIR([src/irc.c])
 AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.
