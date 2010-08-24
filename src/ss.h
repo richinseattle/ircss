@@ -18,7 +18,24 @@
 #ifndef _SS_H_
 #define _SS_H_
 
-/* TODO: function prototypes */
+#define MAX_SEED 128
+#define MAX_MSG 512
+
+typedef struct freq {char *host; char *user; char *chan; char *stream;} freq_t;
+
+typedef struct seed {int *arr; int sz; int pos;} seed_t;
+
+void ss_send(seed_t *, freq_t *, int, char *);
+
+char *ss_recv(seed_t *, freq_t *, int);
+
+void init_freq(freq_t *);
+
+void kill_freq(freq_t *);
+
+seed_t init_seed(char *);
+
+void kill_seed(seed_t *);
 
 #endif
 

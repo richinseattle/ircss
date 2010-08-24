@@ -18,7 +18,29 @@
 #ifndef _IRC_H_
 #define _IRC_H_
 
-/* TODO: function prototypes */
+#include <sys/socket.h>
+
+typedef struct user {char *nick; char *user; char *real; char *host; int reg;} user_t;
+
+void *get_in_addr(struct sockaddr *sa);
+
+void sigchld_handler(int s);
+
+void error(char *msg);
+
+void reg_conn(int cli_sockfd, user_t *user);
+
+int init_srv(int port);
+
+int init_cli(int srv_sockfd);
+
+void *cli_read(void *ptr);
+
+void *cli_write(void *ptr);
+
+void run_cli(int cli_sockfd);
+
+int irc(int);
 
 #endif
 

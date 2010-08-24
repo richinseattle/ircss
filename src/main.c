@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
   char *filename, str[LINE_MAX] = "", *ret;
   extern char *optarg;
   extern int optind;
-
+  
   while (1) {
     int option_index = 0;
 
@@ -84,8 +84,9 @@ int main(int argc, char **argv) {
     }
   }
 
-  printf("Hello World!\n");
 
+  irc(6666);
+  
   exit(EXIT_SUCCESS);
 }
 
