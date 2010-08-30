@@ -229,7 +229,8 @@ int init_cli(int srv_sockfd) {
  *   cli_read and cli_write are asynchronous i/o via the client socket.
  */
 void *cli_read(void *ptr) {
-  int cli_sockfd = *((int *) ptr);
+  settings_t *cli_sett = (settings_t *) ptr;
+  int cli_sockfd = cli_sett->cli_sockfd;
   int err;
   char buf[MAX_BUF + 1];
 
@@ -257,12 +258,21 @@ void *cli_read(void *ptr) {
             if (DEBUG) fprintf(stderr, "DEBUG: client exited.\n");
             exit(EXIT_SUCCESS);
           }
+          
+          else if (strcmp(cmd, "seed") == 0) {
+            tok = strtok(NULL, " ");
+            strncpy(buf, tok, MAX_SEED);
+            char seed_in[MAX_MSG];
+            sscanf(buf, "%s", seed_in);
+            err = init_seed(&(cli_sett->seed), seed_in);
+          }                              
+    
           else {
             if (DEBUG) fprintf(stderr, "DEBUG: unkown command: %s\n", cmd);  
             continue;
           }
         }
-        //else ss_send(tok);
+        else ss_send(cli_sett, tok);
       }
     }
   }
@@ -289,11 +299,12 @@ void *cli_write(void *ptr) {
 void run_cli(int cli_sockfd) {
   pthread_t pt_read, pt_write;
   user_t user;
+  settings_t cli_sett;
   char s[INET6_ADDRSTRLEN];
   char host[MAX_HOST + 1];
   struct sockaddr_storage cli_addr;
   int cli_len = sizeof(cli_addr);
-
+  
   user.reg = 0;
   user.nick = calloc(MAX_NICK + 1, sizeof(char));
   user.user = calloc(MAX_USER + 1, sizeof(char));
@@ -307,9 +318,12 @@ void run_cli(int cli_sockfd) {
   if (DEBUG) fprintf(stderr, "DEBUG: user.host = %s\n", user.host);
 
   reg_conn(cli_sockfd, &user);
+  init_settings(&cli_sett);
+  cli_sett.user = (user_t)user;
+  cli_sett.cli_sockfd = cli_sockfd;
 
-  pthread_create(&pt_read, NULL, cli_read, (void *)&cli_sockfd);
-  pthread_create(&pt_write, NULL, cli_write, (void *)&cli_sockfd);
+  pthread_create(&pt_read, NULL, cli_read, (void *)&cli_sett);
+  pthread_create(&pt_write, NULL, cli_write, (void *)&cli_sett);
 
   pthread_join(pt_read, NULL);
   pthread_join(pt_write, NULL);

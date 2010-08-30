@@ -20,22 +20,31 @@
 
 #define MAX_SEED 128
 #define MAX_MSG 512
+#define MAX_FREQ 10
 
 typedef struct freq {char *host; char *user; char *chan; char *stream;} freq_t;
 
 typedef struct seed {int *arr; int sz; int pos;} seed_t;
 
-void ss_send(seed_t *, freq_t *, int, char *);
+typedef struct user {char *nick; char *user; char *real; char *host; int reg;} user_t;
 
-char *ss_recv(seed_t *, freq_t *, int);
+typedef struct settings {freq_t pool[MAX_FREQ]; int pool_sz; seed_t seed; user_t user; int cli_sockfd;} settings_t;
+
+void ss_send(settings_t *, char *);
+
+char *ss_recv(settings_t *);
 
 void init_freq(freq_t *);
 
 void kill_freq(freq_t *);
 
-seed_t init_seed(char *);
+int init_seed(seed_t *, char *);
 
 void kill_seed(seed_t *);
+
+void init_settings(settings_t *);
+
+void kill_settings(settings_t *);
 
 #endif
 

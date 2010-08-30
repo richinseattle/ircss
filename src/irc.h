@@ -19,8 +19,9 @@
 #define _IRC_H_
 
 #include <sys/socket.h>
+#include "ss.h"
 
-typedef struct user {char *nick; char *user; char *real; char *host; int reg;} user_t;
+//typedef struct user {char *nick; char *user; char *real; char *host; int reg;} user_t;
 
 void *get_in_addr(struct sockaddr *sa);
 
