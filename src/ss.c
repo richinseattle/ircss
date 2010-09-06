@@ -40,7 +40,8 @@ void ss_send(settings_t *settings, char *msg) {
 }
 
 //char *ss_recv(seed_t *seed, freq_t *pool, int pool_sz) {
-char *ss_recv(settings_t *settings) {  
+void *ss_recv(void *ptr) {  
+  settings_t *settings = (settings_t *) ptr;
   char *msg = calloc(MAX_MSG, sizeof(char));
   //char msg[MAX_MSG];
   int  cur_freq = 0, i;
@@ -67,7 +68,7 @@ char *ss_recv(settings_t *settings) {
     pool_ct[cur_freq]++;
   }
    
-  return msg;
+  cli_write(settings, msg);
 }
 
 void init_freq(freq_t *freq) {

@@ -280,15 +280,20 @@ void *cli_read(void *ptr) {
 
 /*
  * name: cli_write
- * return: void pointer (see pthread docs)
- * description: thread to handle writes to the client, sends messages to the
- *   user. cli_read and cli_write are asynchronous i/o via the client socket.
+ * return: the return value of write(), -1 means error.
+ * description: writes a message to the client.
  */
-void *cli_write(void *ptr) {
-  int cli_sockfd = *((int *) ptr);
+int cli_write(settings_t *cli_sett, char *msg) {
+  int cli_sockfd = cli_sett->cli_sockfd;
+  int err;
+  char buf[MAX_BUF + 1];
 
-  /* TODO: messages to be sent to the client, perhaps from a socket in the
-           spread-spectrum code returned by ss_recv() */
+  snprintf(buf, MAX_BUF, "PRIVMSG %s :%s", CHANNEL, msg);
+
+  err = write(cli_sockfd, buf, MAX_BUF);
+  if (err == -1) error("ERROR on write");
+
+  return err;
 }
 
 /*
@@ -323,7 +328,7 @@ void run_cli(int cli_sockfd) {
   cli_sett.cli_sockfd = cli_sockfd;
 
   pthread_create(&pt_read, NULL, cli_read, (void *)&cli_sett);
-  pthread_create(&pt_write, NULL, cli_write, (void *)&cli_sett);
+  pthread_create(&pt_write, NULL, ss_recv, (void *)&cli_sett);
 
   pthread_join(pt_read, NULL);
   pthread_join(pt_write, NULL);

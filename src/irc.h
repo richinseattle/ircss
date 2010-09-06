@@ -37,7 +37,7 @@ int init_cli(int srv_sockfd);
 
 void *cli_read(void *ptr);
 
-void *cli_write(void *ptr);
+int cli_write(settings_t *cli_sett, char *msg);
 
 void run_cli(int cli_sockfd);
 

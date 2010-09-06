@@ -32,7 +32,7 @@ typedef struct settings {freq_t pool[MAX_FREQ]; int pool_sz; seed_t seed; user_t
 
 void ss_send(settings_t *, char *);
 
-char *ss_recv(settings_t *);
+void *ss_recv(void *ptr);
 
 void init_freq(freq_t *);
 
