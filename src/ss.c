@@ -67,8 +67,9 @@ void *ss_recv(void *ptr) {
     strcat(msg, buf);
     pool_ct[cur_freq]++;
   }
-   
-  cli_write(settings, msg);
+
+  //cli_write(settings, msg);
+  cli_write(settings, "this is a test static message from ss_recv()\n");
 }
 
 void init_freq(freq_t *freq) {

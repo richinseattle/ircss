@@ -33,8 +33,15 @@
 /* 1 enables debug messages, 0 disables */
 #define DEBUG 1
 
-/* the channel users will join on connect (include the # or &) */
+/* bot info */
+#define BOT_NICK "ircss"
+#define BOT_USER "ircss"
+#define BOT_HOST "localhost"
+
+/* channel info */
+#define SERVER "ircss"
 #define CHANNEL "#ircss"
+#define TOPIC "IRCSS"
 
 /* max connections the irc daemon will accept */
 #define MAX_CONNS 10
@@ -49,8 +56,10 @@
 #define MAX_HOST 255
 
 /* server response message codes, defined in RFC 1459 */
-#define RPL_MOTDSTART 375
+#define RPL_TOPIC 332
+#define RPL_NAMREPLY 353
 #define RPL_MOTD 372
+#define RPL_MOTDSTART 375
 #define RPL_ENDOFMOTD 376
 
 /*
@@ -136,12 +145,13 @@ void reg_conn(int cli_sockfd, user_t *user) {
 
   if (DEBUG) fprintf(stderr, "DEBUG: registration successful.\n");
 
-  char *server_name = "ircss";
-  char preamble[4][MAX_BUF + 1];
-  snprintf(preamble[0], MAX_BUF, ":%s %d %s :- %s Message of the Day -\n", server_name, RPL_MOTDSTART, user->nick, server_name);
-  snprintf(preamble[1], MAX_BUF, ":%s %d %s :- Welcome to ircss. Enjoy!\n", server_name, RPL_MOTD, user->nick);
-  snprintf(preamble[2], MAX_BUF, ":%s %d %s :End of /MOTD command.\n", server_name, RPL_ENDOFMOTD, user->nick);
+  char preamble[6][MAX_BUF + 1];
+  snprintf(preamble[0], MAX_BUF, ":%s %d %s :- %s Message of the Day -\n", SERVER, RPL_MOTDSTART, user->nick, SERVER);
+  snprintf(preamble[1], MAX_BUF, ":%s %d %s :- Welcome to ircss. Enjoy!\n", SERVER, RPL_MOTD, user->nick);
+  snprintf(preamble[2], MAX_BUF, ":%s %d %s :End of /MOTD command.\n", SERVER, RPL_ENDOFMOTD, user->nick);
   snprintf(preamble[3], MAX_BUF, ":%s!~%s@%s JOIN :%s\n", user->nick, user->user, user->host, CHANNEL);
+  snprintf(preamble[4], MAX_BUF, ":%s %d %s %s :%s\n", SERVER, RPL_TOPIC, user->nick, CHANNEL, TOPIC);
+  snprintf(preamble[5], MAX_BUF, ":%s %d %s = %s :%s %s\n", SERVER, RPL_NAMREPLY, user->nick, CHANNEL, BOT_NICK, user->nick);
 
   for (i = 0; i < sizeof(preamble) / MAX_BUF; i++) {
     err = write(cli_sockfd, preamble[i], strlen(preamble[i]));
@@ -288,9 +298,9 @@ int cli_write(settings_t *cli_sett, char *msg) {
   int err;
   char buf[MAX_BUF + 1];
 
-  snprintf(buf, MAX_BUF, "PRIVMSG %s :%s", CHANNEL, msg);
+  snprintf(buf, MAX_BUF, ":%s!~%s@%s PRIVMSG %s :%s", BOT_NICK, BOT_USER, BOT_HOST, CHANNEL, msg);
 
-  err = write(cli_sockfd, buf, MAX_BUF);
+  err = write(cli_sockfd, buf, strlen(buf));
   if (err == -1) error("ERROR on write");
 
   return err;
