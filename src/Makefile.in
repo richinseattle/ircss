@@ -30,7 +30,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = ircssd$(EXEEXT)
+bin_PROGRAMS = ircssd$(EXEEXT) rawd$(EXEEXT)
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -48,6 +48,9 @@ ircssd_OBJECTS = $(am_ircssd_OBJECTS)
 ircssd_LDADD = $(LDADD)
 ircssd_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(ircssd_LDFLAGS) \
 	$(LDFLAGS) -o $@
+am_rawd_OBJECTS = rawd.$(OBJEXT)
+rawd_OBJECTS = $(am_rawd_OBJECTS)
+rawd_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -55,8 +58,8 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(ircssd_SOURCES)
-DIST_SOURCES = $(ircssd_SOURCES)
+SOURCES = $(ircssd_SOURCES) $(rawd_SOURCES)
+DIST_SOURCES = $(ircssd_SOURCES) $(rawd_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -146,6 +149,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 ircssd_SOURCES = main.c irc.c ss.c
 ircssd_LDFLAGS = -lpthread
+rawd_SOURCES = rawd.c
 all: all-am
 
 .SUFFIXES:
@@ -205,6 +209,9 @@ clean-binPROGRAMS:
 ircssd$(EXEEXT): $(ircssd_OBJECTS) $(ircssd_DEPENDENCIES) 
 	@rm -f ircssd$(EXEEXT)
 	$(ircssd_LINK) $(ircssd_OBJECTS) $(ircssd_LDADD) $(LIBS)
+rawd$(EXEEXT): $(rawd_OBJECTS) $(rawd_DEPENDENCIES) 
+	@rm -f rawd$(EXEEXT)
+	$(LINK) $(rawd_OBJECTS) $(rawd_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -214,6 +221,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/irc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rawd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ss.Po@am__quote@
 
 .c.o:

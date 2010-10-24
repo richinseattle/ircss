@@ -23,7 +23,7 @@
 #define MAX_MSG 512
 #define MAX_FREQ 10
 
-typedef struct freq {char *host; char *user; char *chan; char *stream;} freq_t;
+typedef struct freq {char *host; int port; char *type; char *user; char *chan; char *stream; int sockfd;} freq_t;
 
 typedef struct seed {int *arr; int sz; int pos;} seed_t;
 

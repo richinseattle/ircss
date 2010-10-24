@@ -122,7 +122,7 @@ void init_settings(settings_t *settings) {
 
     //settings->pool[0]->host = "host1";// (freq_t){"irc1.example.com", "user1", "channel1", NULL};
     //settings->pool[0]->user = "user1";// (freq_t){"irc1.example.com", "user1", "channel1", NULL};
-    settings->pool[0] = (freq_t){"irc1.example.com", "user1", "channel1", NULL};
+    settings->pool[0] = (freq_t){"localhost", 6601, "raw", "user1", "channel1", NULL, 0};
      
     int i;
     settings->pool_sz = sizeof(settings->pool) / sizeof(freq_t);
