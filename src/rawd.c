@@ -28,7 +28,7 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
-#include "irc.h"
+#include "sock.h"
 
 /* 1 enables debug messages, 0 disables */
 #define DEBUG 1
@@ -53,7 +53,7 @@ int raw(int port) {
   char remoteIP[INET6_ADDRSTRLEN];
   int i, j, nbytes;
 
-  srv_sockfd = init_srv(port);
+  srv_sockfd = get_srv_sock(port);
 
   FD_ZERO(&master);
   FD_ZERO(&read_fds);
@@ -70,7 +70,7 @@ int raw(int port) {
     for (i = 0; i <= fdmax; i++) {
       if (FD_ISSET(i, &read_fds)) {
         if (i == srv_sockfd) {
-          cli_sockfd = init_cli(srv_sockfd);
+          cli_sockfd = get_cli_sock(srv_sockfd);
           FD_SET(cli_sockfd, &master);
           if (cli_sockfd > fdmax) fdmax = cli_sockfd;
         }

@@ -19,30 +19,65 @@
 #ifndef _IRC_H_
 #define _IRC_H_
 
-#include <sys/socket.h>
-#include "ss.h"
+/* 1 enables debug messages, 0 disables */
+#define DEBUG 1
 
-//typedef struct user {char *nick; char *user; char *real; char *host; int reg;} user_t;
+/* Bot info */
+#define BOT_NICK "ircss"
+#define BOT_USER "ircss"
+#define BOT_HOST "localhost"
 
-void *get_in_addr(struct sockaddr *sa);
+/* Channel info */
+#define SERVER "ircss"
+#define CHANNEL "#ircss"
+#define TOPIC "IRCSS"
 
-void sigchld_handler(int s);
+/* Maximum message buffer size in bytes */
+#define MAX_BUF 255
 
-void error(char *msg);
+/* Maximum lengths for client nick, username, real name, hostname */
+#define MAX_NICK 9
+#define MAX_USER 9
+#define MAX_REAL 25
+#define MAX_HOST 255
 
+/* Server response message codes, as defined in RFC 1459 */
+#define RPL_TOPIC 332
+#define RPL_NAMREPLY 353
+#define RPL_MOTD 372
+#define RPL_MOTDSTART 375
+#define RPL_ENDOFMOTD 376
+
+/*
+ * IRC user, used to keep track of registered users on the irc server.
+ */
+typedef struct user {char *nick; char *user; char *real; char *host; int reg;} user_t;
+
+/*
+ * Registers newly-connected clients via NICK and USER commands as specified
+ * in RFC 1459.
+ */
 void reg_conn(int cli_sockfd, user_t *user);
 
-int init_srv(int port);
-
-int init_cli(int srv_sockfd);
-
+/*
+ * Pthread to handle reading messages from the client, parses all user input.
+ */
 void *cli_read(void *ptr);
 
-int cli_write(settings_t *cli_sett, char *msg);
+/*
+ * Sends a message to the client.
+ */
+void cli_write(int cli_sockfd, char *msg);
 
-void run_cli(int cli_sockfd);
+/*
+ * Starts a thread to listen for user input on given sockfd.
+ */
+void run_irc_cli(int cli_sockfd);
 
-int irc(int);
+/*
+ * Starts a listening irc server on the given port.
+ */
+int run_irc_srv(int port);
 
 #endif
 

@@ -16,36 +16,39 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _SS_H_
-#define _SS_H_
+#ifndef _SOCK_H_
+#define _SOCK_H_
 
-#define MAX_SEED 128
-#define MAX_MSG 512
-#define MAX_FREQ 10
+#include <sys/socket.h>
 
-typedef struct freq {char *host; int port; char *type; char *user; char *chan; char *stream; int sockfd;} freq_t;
+/* Maximum simultaneous connections the server will allow */
+#define MAX_CONNS 10
 
-typedef struct seed {int *arr; int sz; int pos;} seed_t;
+/*
+ * Returns the appropriate protocol-specific sockaddr (ipv4/ipv6) given a
+ * generic sockaddr.
+ */
+void *get_in_addr(struct sockaddr *sa);
 
-typedef struct user {char *nick; char *user; char *real; char *host; int reg;} user_t;
+/*
+ * Child process handler, used to avoid zombie child processes.
+ */
+void sigchld_handler(int s);
 
-typedef struct settings {freq_t pool[MAX_FREQ]; int pool_sz; seed_t seed; user_t user; int cli_sockfd;} settings_t;
+/*
+ * Displays the given error message via perror then exits with failure code.
+ */
+void error(char *msg);
 
-void ss_send(settings_t *, char *);
+/*
+ * Establishes a listening socket on the specified port and returns the sockfd.
+ */
+int get_srv_sock(int port);
 
-void *ss_recv(void *ptr);
-
-void init_freq(freq_t *);
-
-void kill_freq(freq_t *);
-
-int init_seed(seed_t *, char *);
-
-void kill_seed(seed_t *);
-
-void init_settings(settings_t *);
-
-void kill_settings(settings_t *);
+/*
+ * Creates a socket for an incoming client connection and returns the sockfd.
+ */
+int get_cli_sock(int srv_sockfd);
 
 #endif
 

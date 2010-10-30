@@ -18,46 +18,34 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <netinet/in.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <sys/wait.h>
-#include <signal.h>
-#include <pthread.h>
+#include "sock.h"
 #include "irc.h"
-#include "ss.h"
 
 /* 1 enables debug messages, 0 disables */
 #define DEBUG 1
 
-/* bot info */
+/* Bot info */
 #define BOT_NICK "ircss"
 #define BOT_USER "ircss"
 #define BOT_HOST "localhost"
 
-/* channel info */
+/* Channel info */
 #define SERVER "ircss"
 #define CHANNEL "#ircss"
 #define TOPIC "IRCSS"
 
-/* max connections the irc daemon will accept */
-#define MAX_CONNS 10
-
-/* max message buffer size */
+/* Maximum message buffer size in bytes */
 #define MAX_BUF 255
 
-/* max lengths for client nick, username, real name, hostname */
+/* Maximum lengths for client nick, username, real name, hostname */
 #define MAX_NICK 9
 #define MAX_USER 9
 #define MAX_REAL 25
 #define MAX_HOST 255
 
-/* server response message codes, defined in RFC 1459 */
+/* Server response message codes, as defined in RFC 1459 */
 #define RPL_TOPIC 332
 #define RPL_NAMREPLY 353
 #define RPL_MOTD 372
@@ -65,43 +53,8 @@
 #define RPL_ENDOFMOTD 376
 
 /*
- * name: get_in_addr
- * return: ipv4 or ipv6 sockaddr
- * description: returns the appropriate protocol-specific sockaddr (ipv4/ipv6)
- *   given a generic sockaddr.
- */
-void *get_in_addr(struct sockaddr *sa) {
-  if (sa->sa_family == AF_INET)
-    return &(((struct sockaddr_in*)sa)->sin_addr);
-
-  return &(((struct sockaddr_in6*)sa)->sin6_addr);
-}
-
-/*
- * name: sigchld_handler
- * return: none
- * description: child process handler, used to avoid zombie child processes.
- */
-void sigchld_handler(int s) {
-  while (waitpid(-1, NULL, WNOHANG) > 0);
-}
-
-/*
- * name: error
- * return: none
- * description: displays the error message via perror then exits with failure
- *   code.
- */
-void error(char *msg) {
-  perror(msg);
-  exit(EXIT_FAILURE);
-}
-
-/*
- * name: reg_conn
- * return: none
- * description: registers newly-connected clients via NICK and USER commands
- *   as specified in RFC 1459.
+ * Registers newly-connected clients via NICK and USER commands as specified
+ * in RFC 1459.
  */
 void reg_conn(int cli_sockfd, user_t *user) {
   if (DEBUG) fprintf(stderr, "DEBUG: reg_conn() entered.\n");
@@ -162,87 +115,11 @@ void reg_conn(int cli_sockfd, user_t *user) {
 }
 
 /*
- * name: init_srv
- * return: listening server socket file descriptor
- * description: establishes a listening socket on the specified port.
- */
-int init_srv(int port) {
-  int srv_sockfd, err;
-  struct addrinfo hints, *res, *res0;
-  struct sigaction sa;
-
-  memset(&hints, 0, sizeof(hints));
-  hints.ai_family = AF_UNSPEC;
-  hints.ai_socktype = SOCK_STREAM;
-  hints.ai_flags = AI_PASSIVE;
-
-  char port_str[6];
-  if (port < 1 || port > 65535) fprintf(stderr, "Invalid port\n");
-  sprintf(port_str, "%d", port);
-  err = getaddrinfo(NULL, port_str, &hints, &res0);
-  if (err) {
-    fprintf(stderr, "ERROR on getaddrinfo: %s\n", gai_strerror(err));
-    exit(EXIT_FAILURE);
-  }
-
-  for (res = res0; res != NULL; res = res->ai_next) {
-    srv_sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-    if (srv_sockfd == -1) continue;
-
-    int reuse = 1;
-    err = setsockopt(srv_sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int));
-    if (err == -1) error("ERROR on setsockopt");
-
-    err = bind(srv_sockfd, res->ai_addr, res->ai_addrlen);
-    if (err == -1) continue;
-
-    break;
-  }
-
-  if (res == NULL) {
-    fprintf(stderr, "ERROR binding\n");
-    exit(EXIT_FAILURE);
-  }
-
-  freeaddrinfo(res0);
-
-  err = listen(srv_sockfd, MAX_CONNS);
-  if (err == -1) error("ERROR on listen");
-
-  sa.sa_handler = sigchld_handler;
-  sigemptyset(&sa.sa_mask);
-  sa.sa_flags = SA_RESTART;
-  err = sigaction(SIGCHLD, &sa, NULL);
-  if (err == -1) error("ERROR on sigaction");
-
-  return srv_sockfd;
-}
-
-/*
- * name: init_cli
- * return: server<->client socket file descriptor
- * description: creates a socket for incoming client connections.
- */
-int init_cli(int srv_sockfd) {
-  int cli_sockfd, err;
-  struct sockaddr_storage cli_addr;
-  int cli_len = sizeof(cli_addr);
-
-  cli_sockfd = accept(srv_sockfd, (struct sockaddr *) &cli_addr, &cli_len);
-  if (cli_sockfd == -1) error("ERROR on accept");
-
-  return cli_sockfd;
-}
-
-/*
- * name: cli_read
- * return: void pointer (see pthread docs)
- * description: thread to handle reads from the client, parses all user input.
- *   cli_read and cli_write are asynchronous i/o via the client socket.
+ * Pthread to handle reading messages from the client, parses all user input.
  */
 void *cli_read(void *ptr) {
-  settings_t *cli_sett = (settings_t *) ptr;
-  int cli_sockfd = cli_sett->cli_sockfd;
+  int *cli_sockfd_ptr = (int *) ptr;
+  int cli_sockfd = *cli_sockfd_ptr;
   int err;
   char buf[MAX_BUF + 1];
 
@@ -271,32 +148,21 @@ void *cli_read(void *ptr) {
             exit(EXIT_SUCCESS);
           }
           
-          else if (strcmp(cmd, "seed") == 0) {
-            tok = strtok(NULL, " ");
-            strncpy(buf, tok, MAX_SEED);
-            char seed_in[MAX_MSG];
-            sscanf(buf, "%s", seed_in);
-            err = init_seed(&(cli_sett->seed), seed_in);
-          }                              
-    
           else {
             if (DEBUG) fprintf(stderr, "DEBUG: unkown command: %s\n", cmd);  
             continue;
           }
         }
-        else ss_send(cli_sett, tok);
+        else cli_write(cli_sockfd, tok);
       }
     }
   }
 }
 
 /*
- * name: cli_write
- * return: the return value of write(), -1 means error.
- * description: writes a message to the client.
+ * Sends a message to the client.
  */
-int cli_write(settings_t *cli_sett, char *msg) {
-  int cli_sockfd = cli_sett->cli_sockfd;
+void cli_write(int cli_sockfd, char *msg) {
   int err;
   char buf[MAX_BUF + 1];
 
@@ -304,24 +170,19 @@ int cli_write(settings_t *cli_sett, char *msg) {
 
   err = write(cli_sockfd, buf, strlen(buf));
   if (err == -1) error("ERROR on write");
-
-  return err;
 }
 
 /*
- * name: run_cli
- * return: none
- * description: the main execution point for new client connections.
+ * Starts a thread to listen for user input on given sockfd.
  */
-void run_cli(int cli_sockfd) {
-  pthread_t pt_read, pt_write;
+void run_irc_cli(int cli_sockfd) {
+  pthread_t pt_read;
   user_t user;
-  settings_t cli_sett;
   char s[INET6_ADDRSTRLEN];
   char host[MAX_HOST + 1];
   struct sockaddr_storage cli_addr;
   int cli_len = sizeof(cli_addr);
-  
+
   user.reg = 0;
   user.nick = calloc(MAX_NICK + 1, sizeof(char));
   user.user = calloc(MAX_USER + 1, sizeof(char));
@@ -335,34 +196,27 @@ void run_cli(int cli_sockfd) {
   if (DEBUG) fprintf(stderr, "DEBUG: user.host = %s\n", user.host);
 
   reg_conn(cli_sockfd, &user);
-  init_settings(&cli_sett);
-  cli_sett.user = (user_t)user;
-  cli_sett.cli_sockfd = cli_sockfd;
 
-  pthread_create(&pt_read, NULL, cli_read, (void *)&cli_sett);
-  pthread_create(&pt_write, NULL, ss_recv, (void *)&cli_sett);
+  pthread_create(&pt_read, NULL, cli_read, (void *) &cli_sockfd);
 
   pthread_join(pt_read, NULL);
-  pthread_join(pt_write, NULL);
 }
 
 /*
- * name: irc
- * return: 0 on success
- * description: the entry point for the listening irc daemon.
+ * Starts a listening irc server on the given port.
  */
-int irc(int port) {
+int run_irc_srv(int port) {
   int srv_sockfd, cli_sockfd;
 
-  srv_sockfd = init_srv(port);
+  srv_sockfd = get_srv_sock(port);
 
   while (1) {
-    cli_sockfd = init_cli(srv_sockfd);
+    cli_sockfd = get_cli_sock(srv_sockfd);
 
     if (!fork()) {
       close(srv_sockfd);
 
-      run_cli(cli_sockfd);
+      run_irc_cli(cli_sockfd);
 
       close(cli_sockfd);
       exit(EXIT_SUCCESS);
