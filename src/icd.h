@@ -16,5 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _ICD_H_
+#define _ICD_H_
+
 #define DEBUG 1
+
+#endif
 
