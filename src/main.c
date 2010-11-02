@@ -32,7 +32,6 @@ void print_version() {
 
 void print_help() {
   printf("Usage: ircssd -[hv] [-c FILE]\n");
-  printf("internet relay chat: spread spectrum\n");
   printf("\n");
   printf("Options:\n");
   printf("  -c, --config=FILE config file to use\n");
