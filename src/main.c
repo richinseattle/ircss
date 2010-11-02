@@ -21,7 +21,9 @@
 #include <getopt.h>
 #include <limits.h>
 #include <string.h>
+#include <search.h>
 #include "irc.h"
+#include "ss.h"
 
 void print_version() {
   printf("ircssd v0.1\n");
@@ -52,6 +54,8 @@ int main(int argc, char **argv) {
   char *filename, str[LINE_MAX] = "", *ret;
   extern char *optarg;
   extern int optind;
+  pthread_t pt_irc, pt_ss;
+  int irc_port, ss_port;
   
   while (1) {
     int option_index = 0;
@@ -84,9 +88,17 @@ int main(int argc, char **argv) {
     }
   }
 
+  hcreate(MAX_BOTS);
 
-  run_irc_srv(6666);
-  
+  irc_port = 6666;
+  ss_port = 7666;
+
+  pthread_create(&pt_irc, NULL, run_irc_srv, (void *) &irc_port);
+  pthread_create(&pt_ss, NULL, run_ss_srv, (void *) &ss_port);
+
+  pthread_join(pt_irc, NULL);
+  pthread_join(pt_ss, NULL);
+
   exit(EXIT_SUCCESS);
 }
 

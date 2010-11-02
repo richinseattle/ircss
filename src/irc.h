@@ -22,7 +22,7 @@
 /* 1 enables debug messages, 0 disables */
 #define DEBUG 1
 
-/* Bot info */
+/* IRC Bot info */
 #define BOT_NICK "ircss"
 #define BOT_USER "ircss"
 #define BOT_HOST "localhost"
@@ -34,6 +34,9 @@
 
 /* Maximum message buffer size in bytes */
 #define MAX_BUF 255
+
+/* Maximum number of bots that can connect */
+#define MAX_BOTS 255
 
 /* Maximum lengths for client nick, username, real name, hostname */
 #define MAX_NICK 9
@@ -48,10 +51,17 @@
 #define RPL_MOTDSTART 375
 #define RPL_ENDOFMOTD 376
 
+extern int bot_fd;
+
 /*
  * IRC user, used to keep track of registered users on the irc server.
  */
-typedef struct user {char *nick; char *user; char *real; char *host; int reg;} user_t;
+typedef struct user {char *nick; char *user; char *real; char *host; int reg; int sockfd;} user_t;
+
+/*
+ * SS bot, used to keep track of connected bots.
+ */
+typedef struct bot {int sockfd;} bot_t;
 
 /*
  * Registers newly-connected clients via NICK and USER commands as specified
@@ -60,9 +70,9 @@ typedef struct user {char *nick; char *user; char *real; char *host; int reg;} u
 void reg_conn(int cli_sockfd, user_t *user);
 
 /*
- * Pthread to handle reading messages from the client, parses all user input.
+ * Parses messages from the client.
  */
-void *cli_read(void *ptr);
+void cli_read(int cli_sockfd);
 
 /*
  * Sends a message to the client.
@@ -72,12 +82,12 @@ void cli_write(int cli_sockfd, char *msg);
 /*
  * Starts a thread to listen for user input on given sockfd.
  */
-void run_irc_cli(int cli_sockfd);
+void *run_irc_cli(void *ptr);
 
 /*
  * Starts a listening irc server on the given port.
  */
-int run_irc_srv(int port);
+void *run_irc_srv(void *ptr);
 
 #endif
 

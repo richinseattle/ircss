@@ -43,7 +43,8 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-am_ircssd_OBJECTS = main.$(OBJEXT) irc.$(OBJEXT) sock.$(OBJEXT)
+am_ircssd_OBJECTS = main.$(OBJEXT) irc.$(OBJEXT) sock.$(OBJEXT) \
+	ss.$(OBJEXT)
 ircssd_OBJECTS = $(am_ircssd_OBJECTS)
 ircssd_LDADD = $(LDADD)
 ircssd_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(ircssd_LDFLAGS) \
@@ -149,7 +150,7 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-ircssd_SOURCES = main.c irc.c sock.c
+ircssd_SOURCES = main.c irc.c sock.c ss.c
 ircssd_LDFLAGS = -lpthread
 rawd_SOURCES = rawd.c sock.c
 rawd_LDFLAGS = -lpthread
@@ -226,6 +227,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rawd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sock.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ss.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

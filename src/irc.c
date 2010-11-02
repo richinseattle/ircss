@@ -20,37 +20,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <netinet/in.h>
+#include <search.h>
 #include "sock.h"
 #include "irc.h"
 
-/* 1 enables debug messages, 0 disables */
-#define DEBUG 1
-
-/* Bot info */
-#define BOT_NICK "ircss"
-#define BOT_USER "ircss"
-#define BOT_HOST "localhost"
-
-/* Channel info */
-#define SERVER "ircss"
-#define CHANNEL "#ircss"
-#define TOPIC "IRCSS"
-
-/* Maximum message buffer size in bytes */
-#define MAX_BUF 255
-
-/* Maximum lengths for client nick, username, real name, hostname */
-#define MAX_NICK 9
-#define MAX_USER 9
-#define MAX_REAL 25
-#define MAX_HOST 255
-
-/* Server response message codes, as defined in RFC 1459 */
-#define RPL_TOPIC 332
-#define RPL_NAMREPLY 353
-#define RPL_MOTD 372
-#define RPL_MOTDSTART 375
-#define RPL_ENDOFMOTD 376
+int user_fd = 0;
 
 /*
  * Registers newly-connected clients via NICK and USER commands as specified
@@ -115,12 +89,10 @@ void reg_conn(int cli_sockfd, user_t *user) {
 }
 
 /*
- * Pthread to handle reading messages from the client, parses all user input.
+ * Parses messages from the client.
  */
-void *cli_read(void *ptr) {
-  int *cli_sockfd_ptr = (int *) ptr;
-  int cli_sockfd = *cli_sockfd_ptr;
-  int err;
+void cli_read(int cli_sockfd) {
+  int err, i;
   char buf[MAX_BUF + 1];
 
   while (1) {
@@ -147,9 +119,33 @@ void *cli_read(void *ptr) {
             if (DEBUG) fprintf(stderr, "DEBUG: client exited.\n");
             exit(EXIT_SUCCESS);
           }
+
+          else if (strcmp(cmd, "cmd") == 0) {
+            tok = strtok(NULL, "\r\n");
+            char msg[strlen(tok) + 6];
+            strcpy(msg, "CMD ");
+            strcat(msg, tok);
+            strcat(msg, "\n");
+            for (i = 1; i <= bot_fd; i++) {
+              char search[10] = "bot";
+              search[3] = i + 48;
+              search[4] = '\0';
+              char *search_ptr = search;
+              bot_t *result_ptr;
+              ENTRY search_item;
+              ENTRY *result_item;
+              search_item.key = search_ptr;
+              result_item = hsearch(search_item, FIND);
+              if (result_item != NULL)
+                ss_write(((bot_t *)result_item->data)->sockfd, msg);
+              else
+                if (DEBUG)fprintf(stderr, "DEBUG: no results found\n");
+            }
+
+          }
           
           else {
-            if (DEBUG) fprintf(stderr, "DEBUG: unkown command: %s\n", cmd);  
+            if (DEBUG) fprintf(stderr, "DEBUG: unknown command: %s\n", cmd);  
             continue;
           }
         }
@@ -175,8 +171,9 @@ void cli_write(int cli_sockfd, char *msg) {
 /*
  * Starts a thread to listen for user input on given sockfd.
  */
-void run_irc_cli(int cli_sockfd) {
-  pthread_t pt_read;
+void *run_irc_cli(void *ptr) {
+  int *cli_sockfd_ptr = (int *) ptr;
+  int cli_sockfd = *cli_sockfd_ptr;
   user_t user;
   char s[INET6_ADDRSTRLEN];
   char host[MAX_HOST + 1];
@@ -197,34 +194,37 @@ void run_irc_cli(int cli_sockfd) {
 
   reg_conn(cli_sockfd, &user);
 
-  pthread_create(&pt_read, NULL, cli_read, (void *) &cli_sockfd);
-
-  pthread_join(pt_read, NULL);
+  cli_read(cli_sockfd);
 }
 
 /*
  * Starts a listening irc server on the given port.
  */
-int run_irc_srv(int port) {
+void *run_irc_srv(void *ptr) {
+  int *port_ptr = (int *) ptr;
+  int port = *port_ptr;
   int srv_sockfd, cli_sockfd;
+  pthread_t pt_read;
+
+  //hcreate(MAX_BOTS);
 
   srv_sockfd = get_srv_sock(port);
 
   while (1) {
     cli_sockfd = get_cli_sock(srv_sockfd);
+    user_fd++;
 
-    if (!fork()) {
-      close(srv_sockfd);
+    char *key_ptr = calloc(10, sizeof(char));
+    sprintf(key_ptr, "user%d", user_fd);
+    user_t *data_ptr = calloc(1, sizeof(user_t));
+    data_ptr->sockfd = cli_sockfd;
+    ENTRY item;
+    item.key = key_ptr;
+    item.data = data_ptr;
 
-      run_irc_cli(cli_sockfd);
+    hsearch(item, ENTER);
 
-      close(cli_sockfd);
-      exit(EXIT_SUCCESS);
-    }
-
-    close(cli_sockfd);
+    pthread_create(&pt_read, NULL, run_irc_cli, (void *) &cli_sockfd);
   }
-
-  return 0;
 }
 
