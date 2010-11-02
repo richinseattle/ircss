@@ -21,11 +21,9 @@
 #include <getopt.h>
 #include <limits.h>
 #include <string.h>
+#include <search.h>
+#include "icd.h"
 #include "sock.h"
-
-void run_cli() {
-  fprintf(stderr, "DEBUG: run_cli() called. TODO.\n");
-}
 
 void print_version() {
   printf("icd v0.1\n");
@@ -33,17 +31,19 @@ void print_version() {
 }
 
 void print_help() {
-  printf("Usage: icd -[hv] [-c FILE]\n");
+  printf("Usage: icd -[hv] [-p PORT -a ADDRESS]\n");
   printf("\n");
   printf("Options:\n");
-  printf("  -c, --config=FILE config file to use\n");
+  printf("  -p, --port=PORT port number on the ircss server\n");
+  printf("  -a, --address=ADDRESS ipv4/6 address of the ircss server\n");
   printf("  -h, --help        display this screen\n");
   printf("  -v, --version     display version\n");
   exit(EXIT_SUCCESS);
 }
 
 static struct option long_options[] = {
-  {"config",  1, 0, 'c'},
+  {"port",    1, 0, 'p'},
+  {"address", 1, 0, 'a'},
   {"help",    0, 0, 'h'},
   {"version", 0, 0, 'v'},
   {0, 0, 0, 0}
@@ -51,8 +51,7 @@ static struct option long_options[] = {
 
 int main(int argc, char **argv) {
   int c;
-  FILE *fp = NULL;
-  char *filename, str[LINE_MAX] = "", *ret;
+  char *port, *address, str[LINE_MAX] = "", *ret;
   extern char *optarg;
   extern int optind;
   pthread_t pt_irc, pt_ss;
@@ -61,15 +60,17 @@ int main(int argc, char **argv) {
   while (1) {
     int option_index = 0;
 
-    c = getopt_long_only(argc, argv, "c:hv", long_options, &option_index);
+    c = getopt_long_only(argc, argv, "p:a:hv", long_options, &option_index);
 
     if (c == -1)
       break;
 
     switch(c) {
-      case 'c':
-        filename = optarg;
-        fp = fopen(filename, "r");
+      case 'p':
+        port = optarg;
+        break;
+      case 'a':
+        address = optarg;
         break;
       case 'v':
         print_version();
@@ -88,8 +89,6 @@ int main(int argc, char **argv) {
       strncat(str, argv[optind++], LINE_MAX - strlen(str));
     }
   }
-
-  run_cli();
 
   exit(EXIT_SUCCESS);
 }
