@@ -21,9 +21,6 @@
 
 #include <sys/socket.h>
 
-/* Maximum simultaneous connections the server will allow */
-#define MAX_CONNS 10
-
 /*
  * Returns the appropriate protocol-specific sockaddr (ipv4/ipv6) given a
  * generic sockaddr.
@@ -49,6 +46,11 @@ int get_srv_sock(int port);
  * Creates a socket for an incoming client connection and returns the sockfd.
  */
 int get_cli_sock(int srv_sockfd);
+
+/*
+ * Connects to a remote socket and returns the sockfd.
+ */
+int get_conn_sock(char *addr, int port);
 
 #endif
 

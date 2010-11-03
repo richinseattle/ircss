@@ -19,38 +19,6 @@
 #ifndef _IRC_H_
 #define _IRC_H_
 
-/* 1 enables debug messages, 0 disables */
-#define DEBUG 1
-
-/* IRC Bot info */
-#define BOT_NICK "ircss"
-#define BOT_USER "ircss"
-#define BOT_HOST "localhost"
-
-/* Channel info */
-#define SERVER "ircss"
-#define CHANNEL "#ircss"
-#define TOPIC "IRCSS"
-
-/* Maximum message buffer size in bytes */
-#define MAX_BUF 255
-
-/* Maximum number of bots that can connect */
-#define MAX_BOTS 255
-
-/* Maximum lengths for client nick, username, real name, hostname */
-#define MAX_NICK 9
-#define MAX_USER 9
-#define MAX_REAL 25
-#define MAX_HOST 255
-
-/* Server response message codes, as defined in RFC 1459 */
-#define RPL_TOPIC 332
-#define RPL_NAMREPLY 353
-#define RPL_MOTD 372
-#define RPL_MOTDSTART 375
-#define RPL_ENDOFMOTD 376
-
 extern int bot_fd;
 
 /*

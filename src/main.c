@@ -22,11 +22,12 @@
 #include <limits.h>
 #include <string.h>
 #include <search.h>
+#include "core.h"
 #include "irc.h"
 #include "ss.h"
 
 void print_version() {
-  printf("ircssd v0.1.0\n");
+  printf("ircssd v0.1.1\n");
   exit(EXIT_SUCCESS);
 }
 
@@ -87,7 +88,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  hcreate(MAX_BOTS);
+  hcreate(MAX_HTAB);
 
   irc_port = 6666;
   ss_port = 7666;

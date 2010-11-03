@@ -24,6 +24,7 @@
 #include <netdb.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include "core.h"
 #include "sock.h"
 
 /*
@@ -119,5 +120,46 @@ int get_cli_sock(int srv_sockfd) {
   if (cli_sockfd == -1) error("ERROR on accept");
 
   return cli_sockfd;
+}
+
+/*
+ * Connects to a remote socket and returns the sockfd.
+ */
+int get_conn_sock(char *addr, int port) {
+  int conn_sockfd, err;
+  struct addrinfo hints, *res, *res0;
+
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_flags = AI_PASSIVE;
+
+  char port_str[6];
+  if (port < 1 || port > 65535) fprintf(stderr, "Invalid port\n");
+  sprintf(port_str, "%d", port);
+  err = getaddrinfo(NULL, port_str, &hints, &res0);
+  if (err) {
+    fprintf(stderr, "ERROR on getaddrinfo: %s\n", gai_strerror(err));
+    exit(EXIT_FAILURE);
+  }
+
+  for (res = res0; res != NULL; res = res->ai_next) {
+    conn_sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+    if (conn_sockfd == -1) continue;
+
+    err = connect(conn_sockfd, res->ai_addr, res->ai_addrlen);
+    if (err == -1) continue;
+
+    break;
+  }
+
+  if (res == NULL) {
+    fprintf(stderr, "ERROR connecting\n");
+    exit(EXIT_FAILURE);
+  }
+
+  freeaddrinfo(res0);
+
+  return conn_sockfd;
 }
 

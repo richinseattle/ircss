@@ -20,9 +20,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <search.h>
-#include "ss.h"
-#include "irc.h"
+#include "core.h"
 #include "sock.h"
+#include "irc.h"
+#include "ss.h"
 
 int bot_fd = 0;
 
