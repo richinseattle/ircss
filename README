@@ -1,7 +1,38 @@
-ircss v0.1
+ircss v0.1.0
 John Gordon <jgor@indiecom.org>
 Doug Farre  <dougfarre@gmail.com>
 -------------------------------
 
-Internet Relay Chat - Spread Spectrum
+DESCRIPTION:
+ircss is a centralized interface for issuing commands on multiple linux
+computers simultaneously. It consists of a server daemon 'ircssd' and a client
+daemon 'icd'.
+
+This is an alpha release. Expect bugs, security holes, debug statements and
+general chaos. Feel free to email <bugs@ircss.org> with any questions/feedback!
+
+
+QUICKSTART:
+1) Unpack the ircss tarball on the server and all client computers.
+
+2) Build the project on each computer:
+
+   On the server:
+   $ cd /path/to/ircss-<version>/
+   $ ./configure
+   $ make
+   $ src/ircssd
+
+   On each client:
+   $ cd /path/to/ircss-<version>/
+   $ ./configure
+   $ make
+   $ src/icd -a <server_ip> -p 7666
+
+3) Connect to the server using any irc client, on port 6666.
+
+4) In the #ircss channel, issue commands on all connected bots with ".cmd":
+   [#ircss] .cmd uname -a
+   [#ircss] .cmd hostname
+
 

@@ -38,7 +38,7 @@
 #define MAX_BUF 256
 
 void print_version() {
-  printf("icd v0.1\n");
+  printf("icd v0.1.0\n");
   exit(EXIT_SUCCESS);
 }
 
@@ -103,6 +103,8 @@ int main(int argc, char **argv) {
   }
 
   /*real code starts here*/
+  if (port == NULL || address == NULL) print_help();
+
   int sockfd, numbytes, rv;
   char buf[MAXDATASIZE];
   struct addrinfo hints, *servinfo, *p;
