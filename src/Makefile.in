@@ -55,8 +55,6 @@ ircssd_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(ircssd_LDFLAGS) \
 am_rawd_OBJECTS = rawd.$(OBJEXT) sock.$(OBJEXT)
 rawd_OBJECTS = $(am_rawd_OBJECTS)
 rawd_LDADD = $(LDADD)
-rawd_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(rawd_LDFLAGS) $(LDFLAGS) \
-	-o $@
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -157,7 +155,6 @@ ircssd_SOURCES = main.c irc.c sock.c ss.c
 ircssd_LDFLAGS = -lpthread
 icd_SOURCES = icd.c sock.c
 rawd_SOURCES = rawd.c sock.c
-rawd_LDFLAGS = -lpthread
 all: all-am
 
 .SUFFIXES:
@@ -222,7 +219,7 @@ ircssd$(EXEEXT): $(ircssd_OBJECTS) $(ircssd_DEPENDENCIES)
 	$(ircssd_LINK) $(ircssd_OBJECTS) $(ircssd_LDADD) $(LIBS)
 rawd$(EXEEXT): $(rawd_OBJECTS) $(rawd_DEPENDENCIES) 
 	@rm -f rawd$(EXEEXT)
-	$(rawd_LINK) $(rawd_OBJECTS) $(rawd_LDADD) $(LIBS)
+	$(LINK) $(rawd_OBJECTS) $(rawd_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)

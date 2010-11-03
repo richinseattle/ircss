@@ -11,6 +11,8 @@ AC_CONFIG_HEADER([config.h])
 AC_PROG_CC
 
 # Checks for libraries.
+# FIXME: Replace `main' with a function in `-lpthread':
+AC_CHECK_LIB([pthread], [main])
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -21,8 +23,8 @@ AC_CHECK_HEADERS([arpa/inet.h limits.h netdb.h netinet/in.h stdlib.h string.h sy
 
 # Checks for library functions.
 AC_FUNC_ERROR_AT_LINE
-AC_FUNC_FORK
-AC_CHECK_FUNCS([memset socket])
+AC_FUNC_SELECT_ARGTYPES
+AC_CHECK_FUNCS([memset select socket])
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile])
