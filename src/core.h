@@ -41,7 +41,7 @@
 #define CHANNEL "#ircss"
 #define TOPIC "IRCSS"
 
-/* Maximum lengths for client nick, username, real name, hostname */
+/* Maximum byte lengths for client nick, username, real name, hostname */
 #define MAX_NICK 9
 #define MAX_USER 9
 #define MAX_REAL 25

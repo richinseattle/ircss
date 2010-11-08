@@ -46,7 +46,7 @@ PROGRAMS = $(bin_PROGRAMS)
 am_icd_OBJECTS = icd.$(OBJEXT) sock.$(OBJEXT)
 icd_OBJECTS = $(am_icd_OBJECTS)
 icd_LDADD = $(LDADD)
-am_ircssd_OBJECTS = main.$(OBJEXT) irc.$(OBJEXT) sock.$(OBJEXT) \
+am_ircssd_OBJECTS = ircssd.$(OBJEXT) irc.$(OBJEXT) sock.$(OBJEXT) \
 	ss.$(OBJEXT)
 ircssd_OBJECTS = $(am_ircssd_OBJECTS)
 ircssd_LDADD = $(LDADD)
@@ -148,7 +148,7 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-ircssd_SOURCES = main.c irc.c sock.c ss.c
+ircssd_SOURCES = ircssd.c irc.c sock.c ss.c
 ircssd_LDFLAGS = -lpthread
 icd_SOURCES = icd.c sock.c
 all: all-am
@@ -222,7 +222,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/icd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/irc.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ircssd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sock.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ss.Po@am__quote@
 
