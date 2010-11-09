@@ -28,7 +28,7 @@
 #include "sock.h"
 
 void print_version() {
-  printf("icd v0.1.1\n");
+  printf("icd v%s\n", VERSION);
   exit(EXIT_SUCCESS);
 }
 

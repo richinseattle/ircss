@@ -27,7 +27,7 @@
 #include "ss.h"
 
 void print_version() {
-  printf("ircssd v0.1.1\n");
+  printf("ircssd v%s\n", VERSION);
   exit(EXIT_SUCCESS);
 }
 

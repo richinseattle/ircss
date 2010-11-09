@@ -19,6 +19,9 @@
 #ifndef _CORE_H_
 #define _CORE_H_
 
+/* program version number */
+#define VERSION "0.1.1"
+
 /* 1 enables debug messages, 0 disables */
 #define DEBUG 1
 

@@ -1,9 +1,10 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
+m4_include([version.m4])
 AC_PREREQ(2.61)
-AC_INIT(ircss, 0.1.1, bugs@ircss.org)
-AM_INIT_AUTOMAKE(@PACKAGE_NAME@, @PACKAGE_VERSION@)
+AC_INIT(ircss, VERSION_NUMBER, bugs@ircss.org)
+AM_INIT_AUTOMAKE()
 AC_CONFIG_SRCDIR([src/core.h])
 AC_CONFIG_HEADER([config.h])
 
@@ -11,8 +12,7 @@ AC_CONFIG_HEADER([config.h])
 AC_PROG_CC
 
 # Checks for libraries.
-# FIXME: Replace `main' with a function in `-lpthread':
-AC_CHECK_LIB([pthread], [main])
+AC_CHECK_LIB([pthread], [pthread_create])
 
 # Checks for header files.
 AC_HEADER_STDC
