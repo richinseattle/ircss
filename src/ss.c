@@ -31,89 +31,89 @@ int bot_fd = 0;
  * Parses messages from the client.
  */
 void ss_read(int cli_sockfd) {
-  int err, i;
-  char buf[MAX_BUF + 1];
+    int err, i;
+    char buf[MAX_BUF + 1];
 
-  while (1) {
-    memset(&buf, 0, sizeof(buf));
-    err = read(cli_sockfd, buf, MAX_BUF);
-    if (err == -1) error("ERROR on read");
-    else if (err == 0) break;
-    char *tok;
+    while (1) {
+        memset(&buf, 0, sizeof(buf));
+        err = read(cli_sockfd, buf, MAX_BUF);
+        if (err == -1) error("read failed.");
+        else if (err == 0) break;
+        char *tok;
 
-    tok = strtok(buf, " ");
+        tok = strtok(buf, " ");
 
-    if (strcmp(tok, "MSG") == 0) {
-      tok = strtok(NULL, "\r\n");
-      char *msg = calloc(strlen(tok) + 2, sizeof(char));
-      strcpy(msg, tok);
-      strcat(msg, "\n");
+        if (strcmp(tok, "MSG") == 0) {
+            tok = strtok(NULL, "\r\n");
+            char *msg = calloc(strlen(tok) + 2, sizeof(char));
+            strcpy(msg, tok);
+            strcat(msg, "\n");
 
-      for (i = 1; i <= user_fd; i++) {
-        char search[10] = "user";
-        search[4] = i + 48;
-        search[5] = '\0';
-        char *search_ptr = search;
-        bot_t *result_ptr;
-        ENTRY search_item;
-        ENTRY *result_item;
-        search_item.key = search_ptr;
-        result_item = hsearch(search_item, FIND);
-        if (result_item != NULL)
-          cli_write(((user_t *)result_item->data)->sockfd, msg);
-        else
-          if (DEBUG)fprintf(stderr, "DEBUG: no results found\n");
-      }
+            for (i = 1; i <= user_fd; i++) {
+                char search[10] = "user";
+                search[4] = i + 48;
+                search[5] = '\0';
+                char *search_ptr = search;
+                bot_t *result_ptr;
+                ENTRY search_item;
+                ENTRY *result_item;
+                search_item.key = search_ptr;
+                result_item = hsearch(search_item, FIND);
+                if (result_item != NULL)
+                    cli_write(((user_t *)result_item->data)->sockfd, msg);
+                else
+                    debug("no results found.");
+            }
+        }
     }
-  }
 }
 
 /*
  * Sends a message to all users.
  */
 void ss_write(int cli_sockfd, char *msg) {
-  int err;
+    int err;
 
-  err = write(cli_sockfd, msg, strlen(msg));
-  if (err == -1) error("ERROR on write");
+    err = write(cli_sockfd, msg, strlen(msg));
+    if (err == -1) error("write failed.");
 }
 
 /*
  * Starts a thread to listen for bot input on given sockfd.
  */
 void *run_ss_cli(void *ptr) {
-  int *cli_sockfd_ptr = (int *) ptr;
-  int cli_sockfd = *cli_sockfd_ptr;
+    int *cli_sockfd_ptr = (int *) ptr;
+    int cli_sockfd = *cli_sockfd_ptr;
 
-  ss_read(cli_sockfd);
+    ss_read(cli_sockfd);
 }
 
 /*
  * Starts a listening bot server on the given port.
  */
 void *run_ss_srv(void *ptr) {
-  int *port_ptr = (int *) ptr;
-  int port = *port_ptr;
-  int srv_sockfd, cli_sockfd;
-  pthread_t pt_read;
+    int *port_ptr = (int *) ptr;
+    int port = *port_ptr;
+    int srv_sockfd, cli_sockfd;
+    pthread_t pt_read;
 
-  srv_sockfd = get_srv_sock(port);
+    srv_sockfd = get_srv_sock(port);
 
-  while (1) {
-    cli_sockfd = get_cli_sock(srv_sockfd);
-    bot_fd++;
+    while (1) {
+        cli_sockfd = get_cli_sock(srv_sockfd);
+        bot_fd++;
 
-    char *key_ptr = calloc(10, sizeof(char));
-    sprintf(key_ptr, "bot%d", bot_fd);
-    bot_t *data_ptr = calloc(1, sizeof(bot_t));
-    data_ptr->sockfd = cli_sockfd;
-    ENTRY item;
-    item.key = key_ptr;
-    item.data = data_ptr;
+        char *key_ptr = calloc(10, sizeof(char));
+        sprintf(key_ptr, "bot%d", bot_fd);
+        bot_t *data_ptr = calloc(1, sizeof(bot_t));
+        data_ptr->sockfd = cli_sockfd;
+        ENTRY item;
+        item.key = key_ptr;
+        item.data = data_ptr;
 
-    hsearch(item, ENTER);
+        hsearch(item, ENTER);
 
-    pthread_create(&pt_read, NULL, run_ss_cli, (void *) &cli_sockfd);
-  }
+        pthread_create(&pt_read, NULL, run_ss_cli, (void *) &cli_sockfd);
+    }
 }
 

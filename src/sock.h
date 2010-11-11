@@ -33,11 +33,6 @@ void *get_in_addr(struct sockaddr *sa);
 void sigchld_handler(int s);
 
 /*
- * Displays the given error message via perror then exits with failure code.
- */
-void error(char *msg);
-
-/*
  * Establishes a listening socket on the specified port and returns the sockfd.
  */
 int get_srv_sock(int port);

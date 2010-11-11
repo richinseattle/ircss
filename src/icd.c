@@ -28,109 +28,109 @@
 #include "sock.h"
 
 void print_version() {
-  printf("icd v%s\n", VERSION);
-  exit(EXIT_SUCCESS);
+    printf("icd v%s\n", VERSION);
+    exit(EXIT_SUCCESS);
 }
 
 void print_help() {
-  printf("Usage: icd -[hv] -a ADDRESS -p PORT\n");
-  printf("\n");
-  printf("Options:\n");
-  printf("  -a, --address=ADDRESS ipv4/6 address of the ircss server\n");
-  printf("  -p, --port=PORT       port number on the ircss server\n");
-  printf("  -h, --help            display this screen\n");
-  printf("  -v, --version         display version\n");
-  exit(EXIT_SUCCESS);
+    printf("Usage: icd -[hv] -a ADDRESS -p PORT\n");
+    printf("\n");
+    printf("Options:\n");
+    printf("  -a, --address=ADDRESS ipv4/6 address of the ircss server\n");
+    printf("  -p, --port=PORT       port number on the ircss server\n");
+    printf("  -h, --help            display this screen\n");
+    printf("  -v, --version         display version\n");
+    exit(EXIT_SUCCESS);
 }
 
 static struct option long_options[] = {
-  {"port",    1, 0, 'p'},
-  {"address", 1, 0, 'a'},
-  {"help",    0, 0, 'h'},
-  {"version", 0, 0, 'v'},
-  {0, 0, 0, 0}
+    {"port",    1, 0, 'p'},
+    {"address", 1, 0, 'a'},
+    {"help",    0, 0, 'h'},
+    {"version", 0, 0, 'v'},
+    {0, 0, 0, 0}
 };
 
 int main(int argc, char **argv) {
-  int c;
-  char *port, *address, str[LINE_MAX] = "", *ret;
-  extern char *optarg;
-  extern int optind;
-  
-  while (1) {
-    int option_index = 0;
+    int c;
+    char *port, *address, str[LINE_MAX] = "", *ret;
+    extern char *optarg;
+    extern int optind;
+    
+    while (1) {
+        int option_index = 0;
 
-    c = getopt_long_only(argc, argv, "p:a:hv", long_options, &option_index);
+        c = getopt_long_only(argc, argv, "p:a:hv", long_options, &option_index);
 
-    if (c == -1)
-      break;
+        if (c == -1)
+            break;
 
-    switch(c) {
-      case 'p':
-        port = optarg;
-        break;
-      case 'a':
-        address = optarg;
-        break;
-      case 'v':
-        print_version();
-        break;
-      case 'h':
-      default:
-        print_help();
-        break;
+        switch(c) {
+            case 'p':
+                port = optarg;
+                break;
+            case 'a':
+                address = optarg;
+                break;
+            case 'v':
+                print_version();
+                break;
+            case 'h':
+            default:
+                print_help();
+                break;
+        }
     }
-  }
 
-  if (optind < argc) {
-    strncat(str, argv[optind++], LINE_MAX - strlen(str));
-    while (optind < argc) {
-      strcat(str, " ");
-      strncat(str, argv[optind++], LINE_MAX - strlen(str));
+    if (optind < argc) {
+        strncat(str, argv[optind++], LINE_MAX - strlen(str));
+        while (optind < argc) {
+            strcat(str, " ");
+            strncat(str, argv[optind++], LINE_MAX - strlen(str));
+        }
     }
-  }
 
-  /*real code starts here*/
-  if (port == NULL || address == NULL) print_help();
+    /*real code starts here*/
+    if (port == NULL || address == NULL) print_help();
 
-  int conn_sockfd, err;
-  char buf[MAX_BUF + 1];
+    int conn_sockfd, err;
+    char buf[MAX_BUF + 1];
 
-  conn_sockfd = get_conn_sock(address, atoi(port));
+    conn_sockfd = get_conn_sock(address, atoi(port));
 
-  while (1) {
-    memset(&buf, 0, sizeof(buf));
-    err = read(conn_sockfd, buf, MAX_BUF);
-    if (err == -1) error("ERROR on read");
-    else if (err == 0) break;
-    char *tok;
+    while (1) {
+        memset(&buf, 0, sizeof(buf));
+        err = read(conn_sockfd, buf, MAX_BUF);
+        if (err == -1) error("read failed.");
+        else if (err == 0) break;
+        char *tok;
 
-    tok = strtok(buf, " ");
+        tok = strtok(buf, " ");
 
-    if (strcmp(tok, "CMD") == 0) {
-      tok = strtok(NULL, "\r\n");
-      FILE *fp;
-      int status, err;
-      char line[MAX_BUF + 1];
-      char msg[MAX_BUF + 5];
+        if (strcmp(tok, "CMD") == 0) {
+            tok = strtok(NULL, "\r\n");
+            FILE *fp;
+            int status, err;
+            char line[MAX_BUF + 1];
+            char msg[MAX_BUF + 5];
 
-      fp = popen(tok, "r");
-      if (fp == NULL) error("ERROR: popen");
+            fp = popen(tok, "r");
+            if (fp == NULL) error("popen failed.");
 
-      while (fgets(line, MAX_BUF, fp) != NULL) {
-        strcpy(msg, "MSG ");
-        strcat(msg, line);
-        err = write(conn_sockfd, msg, strlen(msg)); 
-        if (err == -1) error("ERROR on write");
-      }
+            while (fgets(line, MAX_BUF, fp) != NULL) {
+                strcpy(msg, "MSG ");
+                strcat(msg, line);
+                err = write(conn_sockfd, msg, strlen(msg)); 
+                if (err == -1) error("write failed.");
+            }
 
-      status = pclose(fp);
-      if (status == -1) error("ERROR on pclose");
-    }       
-  }
+            status = pclose(fp);
+            if (status == -1) error("pclose failed.");
+        }       
+    }
 
-  close(conn_sockfd);
+    close(conn_sockfd);
 
-  exit(EXIT_SUCCESS);
+    exit(EXIT_SUCCESS);
 }
 

@@ -18,16 +18,16 @@ QUICKSTART:
 2) Build the project on each computer:
 
    On the server:
-   $ cd /path/to/ircss-<version>/
-   $ ./configure
-   $ make
-   $ src/ircssd
+     $ cd /path/to/ircss-<version>/
+     $ ./configure
+     $ make
+     $ src/ircssd
 
    On each client:
-   $ cd /path/to/ircss-<version>/
-   $ ./configure
-   $ make
-   $ src/icd -a <server_ip> -p 7666
+     $ cd /path/to/ircss-<version>/
+     $ ./configure
+     $ make
+     $ src/icd -a <server_ip> -p 7666
 
 3) Connect to the server using any irc client, on port 6666.
 

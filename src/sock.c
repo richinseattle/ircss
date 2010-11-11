@@ -32,134 +32,114 @@
  * generic sockaddr.
  */
 void *get_in_addr(struct sockaddr *sa) {
-  if (sa->sa_family == AF_INET)
-    return &(((struct sockaddr_in*)sa)->sin_addr);
+    if (sa->sa_family == AF_INET)
+        return &(((struct sockaddr_in*)sa)->sin_addr);
 
-  return &(((struct sockaddr_in6*)sa)->sin6_addr);
+    return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
 /*
  * Child process handler, used to avoid zombie child processes.
  */
 void sigchld_handler(int s) {
-  while (waitpid(-1, NULL, WNOHANG) > 0);
-}
-
-/*
- * Displays the given error message via perror then exits with failure code.
- */
-void error(char *msg) {
-  perror(msg);
-  exit(EXIT_FAILURE);
+    while (waitpid(-1, NULL, WNOHANG) > 0);
 }
 
 /*
  * Establishes a listening socket on the specified port and returns the sockfd.
  */
 int get_srv_sock(int port) {
-  int srv_sockfd, err;
-  struct addrinfo hints, *res, *res0;
-  struct sigaction sa;
+    int srv_sockfd, err;
+    struct addrinfo hints, *res, *res0;
+    struct sigaction sa;
 
-  memset(&hints, 0, sizeof(hints));
-  hints.ai_family = AF_UNSPEC;
-  hints.ai_socktype = SOCK_STREAM;
-  hints.ai_flags = AI_PASSIVE;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;
 
-  char port_str[6];
-  if (port < 1 || port > 65535) fprintf(stderr, "Invalid port\n");
-  sprintf(port_str, "%d", port);
-  err = getaddrinfo(NULL, port_str, &hints, &res0);
-  if (err) {
-    fprintf(stderr, "ERROR on getaddrinfo: %s\n", gai_strerror(err));
-    exit(EXIT_FAILURE);
-  }
+    char port_str[6];
+    if (port < 1 || port > 65535) error("invalid port.");
+    sprintf(port_str, "%d", port);
+    err = getaddrinfo(NULL, port_str, &hints, &res0);
+    if (err) error("getaddrinfo failed: %s\n", gai_strerror(err));
 
-  for (res = res0; res != NULL; res = res->ai_next) {
-    srv_sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-    if (srv_sockfd == -1) continue;
+    for (res = res0; res != NULL; res = res->ai_next) {
+        srv_sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+        if (srv_sockfd == -1) continue;
 
-    int reuse = 1;
-    err = setsockopt(srv_sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int));
-    if (err == -1) error("ERROR on setsockopt");
+        int reuse = 1;
+        err = setsockopt(srv_sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int));
+        if (err == -1) error("setsockopt failed.");
 
-    err = bind(srv_sockfd, res->ai_addr, res->ai_addrlen);
-    if (err == -1) continue;
+        err = bind(srv_sockfd, res->ai_addr, res->ai_addrlen);
+        if (err == -1) continue;
 
-    break;
-  }
+        break;
+    }
 
-  if (res == NULL) {
-    fprintf(stderr, "ERROR binding\n");
-    exit(EXIT_FAILURE);
-  }
+    if (res == NULL) error("bind failed");
 
-  freeaddrinfo(res0);
+    freeaddrinfo(res0);
 
-  err = listen(srv_sockfd, MAX_CONNS);
-  if (err == -1) error("ERROR on listen");
+    err = listen(srv_sockfd, MAX_CONNS);
+    if (err == -1) error("listen failed.");
 
-  sa.sa_handler = sigchld_handler;
-  sigemptyset(&sa.sa_mask);
-  sa.sa_flags = SA_RESTART;
-  err = sigaction(SIGCHLD, &sa, NULL);
-  if (err == -1) error("ERROR on sigaction");
+    sa.sa_handler = sigchld_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+    err = sigaction(SIGCHLD, &sa, NULL);
+    if (err == -1) error("sigaction failed");
 
-  return srv_sockfd;
+    return srv_sockfd;
 }
 
 /*
  * Creates a socket for an incoming client connection and returns the sockfd.
  */
 int get_cli_sock(int srv_sockfd) {
-  int cli_sockfd, err;
-  struct sockaddr_storage cli_addr;
-  int cli_len = sizeof(cli_addr);
+    int cli_sockfd, err;
+    struct sockaddr_storage cli_addr;
+    int cli_len = sizeof(cli_addr);
 
-  cli_sockfd = accept(srv_sockfd, (struct sockaddr *) &cli_addr, &cli_len);
-  if (cli_sockfd == -1) error("ERROR on accept");
+    cli_sockfd = accept(srv_sockfd, (struct sockaddr *) &cli_addr, &cli_len);
+    if (cli_sockfd == -1) error("accept failed.");
 
-  return cli_sockfd;
+    return cli_sockfd;
 }
 
 /*
  * Connects to a remote socket and returns the sockfd.
  */
 int get_conn_sock(char *addr, int port) {
-  int conn_sockfd, err;
-  struct addrinfo hints, *res, *res0;
+    int conn_sockfd, err;
+    struct addrinfo hints, *res, *res0;
 
-  memset(&hints, 0, sizeof(hints));
-  hints.ai_family = AF_UNSPEC;
-  hints.ai_socktype = SOCK_STREAM;
-  hints.ai_flags = AI_PASSIVE;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;
 
-  char port_str[6];
-  if (port < 1 || port > 65535) fprintf(stderr, "Invalid port\n");
-  sprintf(port_str, "%d", port);
-  err = getaddrinfo(NULL, port_str, &hints, &res0);
-  if (err) {
-    fprintf(stderr, "ERROR on getaddrinfo: %s\n", gai_strerror(err));
-    exit(EXIT_FAILURE);
-  }
+    char port_str[6];
+    if (port < 1 || port > 65535) error("invalid port.");
+    sprintf(port_str, "%d", port);
+    err = getaddrinfo(NULL, port_str, &hints, &res0);
+    if (err) error("getaddrinfo failed: %s\n", gai_strerror(err));
 
-  for (res = res0; res != NULL; res = res->ai_next) {
-    conn_sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-    if (conn_sockfd == -1) continue;
+    for (res = res0; res != NULL; res = res->ai_next) {
+        conn_sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+        if (conn_sockfd == -1) continue;
 
-    err = connect(conn_sockfd, res->ai_addr, res->ai_addrlen);
-    if (err == -1) continue;
+        err = connect(conn_sockfd, res->ai_addr, res->ai_addrlen);
+        if (err == -1) continue;
 
-    break;
-  }
+        break;
+    }
 
-  if (res == NULL) {
-    fprintf(stderr, "ERROR connecting\n");
-    exit(EXIT_FAILURE);
-  }
+    if (res == NULL) error("connect failed.");
 
-  freeaddrinfo(res0);
+    freeaddrinfo(res0);
 
-  return conn_sockfd;
+    return conn_sockfd;
 }
 
