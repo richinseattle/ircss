@@ -52,8 +52,9 @@ static struct option long_options[] = {
 };
 
 void run_icd(char *address, int port) {
-    int conn_sockfd, err;
-    char buf[MAX_BUF + 1];
+    int conn_sockfd, err, status;
+    char buf[MAX_BUF], cmd[MAX_BUF], args[MAX_BUF], msg[MAX_BUF], *tok;
+    FILE *fp;
 
     if (port < 1 || port > 65535) error("invalid port.");
 
@@ -64,23 +65,15 @@ void run_icd(char *address, int port) {
         err = read(conn_sockfd, buf, MAX_BUF);
         if (err == -1) error("read failed.");
         else if (err == 0) break;
-        char *tok;
 
-        tok = strtok(buf, " ");
+        sscanf(buf, "%s %[^\n]", cmd, args);
 
-        if (strcmp(tok, "CMD") == 0) {
-            tok = strtok(NULL, "\r\n");
-            FILE *fp;
-            int status, err;
-            char line[MAX_BUF + 1];
-            char msg[MAX_BUF + 5];
-
-            fp = popen(tok, "r");
+        if (strcmp(cmd, "CMD") == 0) {
+            fp = popen(args, "r");
             if (fp == NULL) error("popen failed.");
 
-            while (fgets(line, MAX_BUF, fp) != NULL) {
-                strcpy(msg, "MSG ");
-                strcat(msg, line);
+            while (fgets(buf, MAX_BUF, fp) != NULL) {
+                snprintf(msg, MAX_BUF, "MSG %s", buf);
                 err = write(conn_sockfd, msg, strlen(msg)); 
                 if (err == -1) error("write failed.");
             }
