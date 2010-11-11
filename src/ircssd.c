@@ -32,43 +32,56 @@ void print_version() {
 }
 
 void print_help() {
-    printf("Usage: ircssd -[hv] [-c FILE]\n");
+    printf("Usage: ircssd -[hv] -p PORT -s PORT\n");
     printf("\n");
     printf("Options:\n");
-    printf("  -c, --config=FILE config file to use\n");
-    printf("  -h, --help        display this screen\n");
-    printf("  -v, --version     display version\n");
+    printf("  -p, --irc-port=PORT  irc server port to listen on\n");
+    printf("  -s, --ss-port=PORT   ss (bot) server port to listen on\n");
+    printf("  -h, --help           display this screen\n");
+    printf("  -v, --version        display version\n");
     exit(EXIT_SUCCESS);
 }
 
 static struct option long_options[] = {
-    {"config",  1, 0, 'c'},
-    {"help",    0, 0, 'h'},
-    {"version", 0, 0, 'v'},
+    {"irc-port", 0, 0, 'p'},
+    {"ss-port",  0, 0, 's'},
+    {"help",     0, 0, 'h'},
+    {"version",  0, 0, 'v'},
     {0, 0, 0, 0}
 };
 
+void run_ircssd(int irc_port, int ss_port) {
+    pthread_t pt_irc, pt_ss;
+    hcreate(MAX_HTAB);
+
+    if (irc_port < 1 || irc_port > 65535) error("invalid irc-port.");
+    if (ss_port < 1 || ss_port > 65535) error("invalid ss-port.");
+
+    pthread_create(&pt_irc, NULL, run_irc_srv, (void *) &irc_port);
+    pthread_create(&pt_ss, NULL, run_ss_srv, (void *) &ss_port);
+
+    pthread_join(pt_irc, NULL);
+    pthread_join(pt_ss, NULL);
+}
+
 int main(int argc, char **argv) {
-    int c;
-    FILE *fp = NULL;
-    char *filename, str[LINE_MAX] = "", *ret;
+    int next_arg, irc_port, ss_port;
     extern char *optarg;
     extern int optind;
-    pthread_t pt_irc, pt_ss;
-    int irc_port, ss_port;
     
     while (1) {
         int option_index = 0;
 
-        c = getopt_long_only(argc, argv, "c:hv", long_options, &option_index);
+        next_arg = getopt_long_only(argc, argv, "p:s:hv", long_options, &option_index);
 
-        if (c == -1)
-            break;
+        if (next_arg == -1) break;
 
-        switch(c) {
-            case 'c':
-                filename = optarg;
-                fp = fopen(filename, "r");
+        switch(next_arg) {
+            case 'p':
+                irc_port = atoi(optarg);
+                break;
+            case 's':
+                ss_port = atoi(optarg);
                 break;
             case 'v':
                 print_version();
@@ -80,25 +93,10 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (optind < argc) {
-        strncat(str, argv[optind++], LINE_MAX - strlen(str));
-        while (optind < argc) {
-            strcat(str, " ");
-            strncat(str, argv[optind++], LINE_MAX - strlen(str));
-        }
-    }
+    if (irc_port == 0 || ss_port == 0) print_help();
 
-    hcreate(MAX_HTAB);
+    run_ircssd(irc_port, ss_port);
 
-    irc_port = 6666;
-    ss_port = 7666;
-
-    pthread_create(&pt_irc, NULL, run_irc_srv, (void *) &irc_port);
-    pthread_create(&pt_ss, NULL, run_ss_srv, (void *) &ss_port);
-
-    pthread_join(pt_irc, NULL);
-    pthread_join(pt_ss, NULL);
-
-    exit(EXIT_SUCCESS);
+    return 0;
 }
 

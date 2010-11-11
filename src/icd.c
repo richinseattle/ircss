@@ -36,10 +36,10 @@ void print_help() {
     printf("Usage: icd -[hv] -a ADDRESS -p PORT\n");
     printf("\n");
     printf("Options:\n");
-    printf("  -a, --address=ADDRESS ipv4/6 address of the ircss server\n");
-    printf("  -p, --port=PORT       port number on the ircss server\n");
-    printf("  -h, --help            display this screen\n");
-    printf("  -v, --version         display version\n");
+    printf("  -a, --address=ADDRESS  ipv4/6 address of the ircss server\n");
+    printf("  -p, --port=PORT        port number on the ircss server\n");
+    printf("  -h, --help             display this screen\n");
+    printf("  -v, --version          display version\n");
     exit(EXIT_SUCCESS);
 }
 
@@ -51,52 +51,13 @@ static struct option long_options[] = {
     {0, 0, 0, 0}
 };
 
-int main(int argc, char **argv) {
-    int c;
-    char *port, *address, str[LINE_MAX] = "", *ret;
-    extern char *optarg;
-    extern int optind;
-    
-    while (1) {
-        int option_index = 0;
-
-        c = getopt_long_only(argc, argv, "p:a:hv", long_options, &option_index);
-
-        if (c == -1)
-            break;
-
-        switch(c) {
-            case 'p':
-                port = optarg;
-                break;
-            case 'a':
-                address = optarg;
-                break;
-            case 'v':
-                print_version();
-                break;
-            case 'h':
-            default:
-                print_help();
-                break;
-        }
-    }
-
-    if (optind < argc) {
-        strncat(str, argv[optind++], LINE_MAX - strlen(str));
-        while (optind < argc) {
-            strcat(str, " ");
-            strncat(str, argv[optind++], LINE_MAX - strlen(str));
-        }
-    }
-
-    /*real code starts here*/
-    if (port == NULL || address == NULL) print_help();
-
+void run_icd(char *address, int port) {
     int conn_sockfd, err;
     char buf[MAX_BUF + 1];
 
-    conn_sockfd = get_conn_sock(address, atoi(port));
+    if (port < 1 || port > 65535) error("invalid port.");
+
+    conn_sockfd = get_conn_sock(address, port);
 
     while (1) {
         memset(&buf, 0, sizeof(buf));
@@ -128,9 +89,42 @@ int main(int argc, char **argv) {
             if (status == -1) error("pclose failed.");
         }       
     }
+}
 
-    close(conn_sockfd);
+int main(int argc, char **argv) {
+    int next_arg;
+    char *port, *address;
+    extern char *optarg;
+    extern int optind;
+    
+    while (1) {
+        int option_index = 0;
 
-    exit(EXIT_SUCCESS);
+        next_arg = getopt_long_only(argc, argv, "p:a:hv", long_options, &option_index);
+
+        if (next_arg == -1) break;
+
+        switch(next_arg) {
+            case 'p':
+                port = optarg;
+                break;
+            case 'a':
+                address = optarg;
+                break;
+            case 'v':
+                print_version();
+                break;
+            case 'h':
+            default:
+                print_help();
+                break;
+        }
+    }
+
+    if (address == NULL || port == NULL) print_help();
+
+    run_icd(address, atoi(port));
+
+    return 0;
 }
 
