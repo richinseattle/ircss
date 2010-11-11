@@ -77,19 +77,10 @@ int main(int argc, char **argv) {
         if (next_arg == -1) break;
 
         switch(next_arg) {
-            case 'p':
-                irc_port = atoi(optarg);
-                break;
-            case 's':
-                ss_port = atoi(optarg);
-                break;
-            case 'v':
-                print_version();
-                break;
-            case 'h':
-            default:
-                print_help();
-                break;
+            case 'p': irc_port = atoi(optarg); break;
+            case 's': ss_port = atoi(optarg); break;
+            case 'v': print_version(); break;
+            case 'h': default: print_help(); break;
         }
     }
 

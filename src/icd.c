@@ -98,19 +98,10 @@ int main(int argc, char **argv) {
         if (next_arg == -1) break;
 
         switch(next_arg) {
-            case 'p':
-                port = optarg;
-                break;
-            case 'a':
-                address = optarg;
-                break;
-            case 'v':
-                print_version();
-                break;
-            case 'h':
-            default:
-                print_help();
-                break;
+            case 'p': port = optarg; break;
+            case 'a': address = optarg; break;
+            case 'v': print_version(); break;
+            case 'h': default: print_help(); break;
         }
     }
 
