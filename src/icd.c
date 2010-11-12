@@ -53,7 +53,7 @@ static struct option long_options[] = {
 
 void run_icd(char *address, int port) {
     int conn_sockfd, err, status;
-    char buf[MAX_BUF], cmd[MAX_BUF], args[MAX_BUF], msg[MAX_BUF], *tok;
+    char buf[MAX_BUF], cmd[MAX_BUF], args[MAX_BUF], msg[MAX_BUF];
     FILE *fp;
 
     if (port < 1 || port > 65535) error("invalid port.");

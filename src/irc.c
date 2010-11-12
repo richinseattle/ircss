@@ -94,26 +94,28 @@ void reg_conn(int cli_sockfd, user_t *user) {
  */
 void cli_read(int cli_sockfd) {
     int err, i;
-    char buf[MAX_BUF + 1];
+    char buf[MAX_BUF], cmd[MAX_BUF], msg[MAX_BUF], *tok;
 
     while (1) {
         memset(&buf, 0, sizeof(buf));
         err = read(cli_sockfd, buf, MAX_BUF);
         if (err == -1) error("read failed.");
         else if (err == 0) break;
-        char *tok;
 
         tok = strtok(buf, " ");
 
         if (strcmp(tok, "PRIVMSG") == 0) {
+            debug("got PRIVMSG\n");
             tok = strtok(NULL, " ");
             if (strcmp(tok, CHANNEL) == 0) {
+                debug("got %s\n", CHANNEL);
                 tok = strtok(NULL, " ");
                 if (tok[0] == ':') tok++;
                 if (tok[0] == '.') {
+                    debug("got .\n");
                     tok++;
-                    char cmd[strlen(tok)];
                     sscanf(tok, "%s", &cmd);
+                    debug("cmd = %s\n", cmd);
 
                     if (strcmp(cmd, "exit") == 0) {
                         close(cli_sockfd);
@@ -123,24 +125,24 @@ void cli_read(int cli_sockfd) {
 
                     else if (strcmp(cmd, "cmd") == 0) {
                         tok = strtok(NULL, "\r\n");
-                        char msg[strlen(tok) + 6];
-                        strcpy(msg, "CMD ");
-                        strcat(msg, tok);
-                        strcat(msg, "\n");
+                        snprintf(msg, MAX_BUF, "CMD %s\n", tok);
+
                         for (i = 1; i <= bot_fd; i++) {
-                            char search[10] = "bot";
-                            search[3] = i + 48;
-                            search[4] = '\0';
-                            char *search_ptr = search;
-                            bot_t *result_ptr;
+                            char search[MAX_BUF];
                             ENTRY search_item;
                             ENTRY *result_item;
-                            search_item.key = search_ptr;
+
+                            snprintf(search, MAX_BUF, "bot%d", i);
+
+                            search_item.key = search;
+
+                            debug("searching for %s\n", search_item.key);
+
                             result_item = hsearch(search_item, FIND);
+
                             if (result_item != NULL)
                                 ss_write(((bot_t *)result_item->data)->sockfd, msg);
-                            else
-                                debug("no results found\n");
+                            else debug("socket not found.\n");
                         }
 
                     }
@@ -161,7 +163,10 @@ void cli_read(int cli_sockfd) {
  */
 void cli_write(int cli_sockfd, char *msg) {
     int err;
-    char buf[MAX_BUF + 1];
+    char buf[MAX_BUF];
+
+    debug("cli_write() entered, cli_sockfd = %d\n", cli_sockfd);
+    debug("msg = %s\n", msg);
 
     snprintf(buf, MAX_BUF, ":%s!~%s@%s PRIVMSG %s :%s", BOT_NICK, BOT_USER, BOT_HOST, CHANNEL, msg);
 
@@ -215,13 +220,17 @@ void *run_irc_srv(void *ptr) {
         cli_sockfd = get_cli_sock(srv_sockfd);
         user_fd++;
 
-        char *key_ptr = calloc(10, sizeof(char));
-        sprintf(key_ptr, "user%d", user_fd);
-        user_t *data_ptr = calloc(1, sizeof(user_t));
-        data_ptr->sockfd = cli_sockfd;
+        char key[MAX_BUF];
+        user_t data;
         ENTRY item;
-        item.key = key_ptr;
-        item.data = data_ptr;
+
+        sprintf(key, "user%d", user_fd);
+
+        data.sockfd = cli_sockfd;
+        item.key = key;
+        item.data = &data;
+
+        debug("entering %s -> sockfd=%d\n", item.key, ((user_t *)item.data)->sockfd);
 
         hsearch(item, ENTER);
 

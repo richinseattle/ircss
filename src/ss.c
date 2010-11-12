@@ -32,37 +32,38 @@ int bot_fd = 0;
  */
 void ss_read(int cli_sockfd) {
     int err, i;
-    char buf[MAX_BUF + 1];
+    char buf[MAX_BUF], cmd[MAX_BUF], args[MAX_BUF], msg[MAX_BUF];
 
     while (1) {
         memset(&buf, 0, sizeof(buf));
         err = read(cli_sockfd, buf, MAX_BUF);
         if (err == -1) error("read failed.");
         else if (err == 0) break;
-        char *tok;
 
-        tok = strtok(buf, " ");
+        sscanf(buf, "%s %[^\n]", cmd, args);
 
-        if (strcmp(tok, "MSG") == 0) {
-            tok = strtok(NULL, "\r\n");
-            char *msg = calloc(strlen(tok) + 2, sizeof(char));
-            strcpy(msg, tok);
-            strcat(msg, "\n");
+        debug("cmd = %s, args = %s\n", cmd, args);
+
+        if (strcmp(cmd, "MSG") == 0) {
+            debug("got MSG\n");
+            snprintf(msg, MAX_BUF, "%s\n", args);
 
             for (i = 1; i <= user_fd; i++) {
-                char search[10] = "user";
-                search[4] = i + 48;
-                search[5] = '\0';
-                char *search_ptr = search;
-                bot_t *result_ptr;
+                char search[MAX_BUF];
                 ENTRY search_item;
                 ENTRY *result_item;
-                search_item.key = search_ptr;
+
+                snprintf(search, MAX_BUF, "user%d", i);
+
+                search_item.key = search;
+
+                debug("searching for %s\n", search_item.key);
+
                 result_item = hsearch(search_item, FIND);
+
                 if (result_item != NULL)
                     cli_write(((user_t *)result_item->data)->sockfd, msg);
-                else
-                    debug("no results found.");
+                else debug("socket not found.\n");
             }
         }
     }
@@ -73,6 +74,9 @@ void ss_read(int cli_sockfd) {
  */
 void ss_write(int cli_sockfd, char *msg) {
     int err;
+
+    debug("ss_write() entered, cli_sockfd = %d\n", cli_sockfd);
+    debug("msg = %s\n", msg);
 
     err = write(cli_sockfd, msg, strlen(msg));
     if (err == -1) error("write failed.");
@@ -103,13 +107,17 @@ void *run_ss_srv(void *ptr) {
         cli_sockfd = get_cli_sock(srv_sockfd);
         bot_fd++;
 
-        char *key_ptr = calloc(10, sizeof(char));
-        sprintf(key_ptr, "bot%d", bot_fd);
-        bot_t *data_ptr = calloc(1, sizeof(bot_t));
-        data_ptr->sockfd = cli_sockfd;
+        char key[MAX_BUF];
+        bot_t data;
         ENTRY item;
-        item.key = key_ptr;
-        item.data = data_ptr;
+
+        snprintf(key, MAX_BUF, "bot%d", bot_fd);
+
+        data.sockfd = cli_sockfd;
+        item.key = key;
+        item.data = &data;
+
+        debug("entering %s -> sockfd=%d\n", item.key, ((bot_t *)item.data)->sockfd);
 
         hsearch(item, ENTER);
 

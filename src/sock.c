@@ -58,9 +58,9 @@ int get_srv_sock(int port) {
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
 
-    char port_str[6];
+    char port_str[MAX_BUF];
     if (port < 1 || port > 65535) error("invalid port.");
-    sprintf(port_str, "%d", port);
+    snprintf(port_str, MAX_BUF, "%d", port);
     err = getaddrinfo(NULL, port_str, &hints, &res0);
     if (err) error("getaddrinfo failed: %s\n", gai_strerror(err));
 
@@ -120,9 +120,9 @@ int get_conn_sock(char *addr, int port) {
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
 
-    char port_str[6];
+    char port_str[MAX_BUF];
     if (port < 1 || port > 65535) error("invalid port.");
-    sprintf(port_str, "%d", port);
+    snprintf(port_str, MAX_BUF, "%d", port);
     err = getaddrinfo(NULL, port_str, &hints, &res0);
     if (err) error("getaddrinfo failed: %s\n", gai_strerror(err));
 
