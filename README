@@ -8,7 +8,7 @@ ircss is a centralized interface for issuing commands on multiple linux
 computers simultaneously. It consists of a server daemon 'ircssd' and a client
 daemon 'icd'.
 
-This is an alpha release. Expect bugs, security holes, debug statements and
+This is an alpha release. Expect bugs, zero security, debug statements and
 general chaos. Feel free to email <bugs@ircss.org> with any questions/feedback!
 
 
@@ -21,7 +21,7 @@ QUICKSTART:
      $ cd /path/to/ircss-<version>/
      $ ./configure
      $ make
-     $ src/ircssd
+     $ src/ircssd -p 6666 -s 7666
 
    On each client:
      $ cd /path/to/ircss-<version>/
