@@ -19,6 +19,7 @@
 #ifndef _IRC_H_
 #define _IRC_H_
 
+// counter for number of bots that have connected
 extern int bot_fd;
 
 /*
@@ -32,18 +33,18 @@ typedef struct user {char *nick; char *user; char *real; char *host; int reg; in
 typedef struct bot {int sockfd;} bot_t;
 
 /*
- * Registers newly-connected clients via NICK and USER commands as specified
- * in RFC 1459.
+ * Registers newly-connected users via NICK and USER commands as specified in
+ * RFC 1459.
  */
 void reg_conn(int cli_sockfd, user_t *user);
 
 /*
- * Parses messages from the client.
+ * Parses messages from an irc user.
  */
 void cli_read(int cli_sockfd);
 
 /*
- * Sends a message to the client.
+ * Sends a message to an irc user.
  */
 void cli_write(int cli_sockfd, char *msg);
 

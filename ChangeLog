@@ -7,3 +7,9 @@ ircss 0.1.1
 ---------
 Code Cleanup
 
+
+ircss 0.1.2
+---------
+More code cleanup and comments, fixed a bug that made it impossible for the bot
+to connect to a server other than localhost.
+

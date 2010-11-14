@@ -42,6 +42,7 @@ void print_help() {
     exit(EXIT_SUCCESS);
 }
 
+/* available command line arguments: short/long form and number of args */
 static struct option long_options[] = {
     {"irc-port", 0, 0, 'p'},
     {"ss-port",  0, 0, 's'},
@@ -54,12 +55,15 @@ void run_ircssd(int irc_port, int ss_port) {
     pthread_t pt_irc, pt_ss;
     hcreate(MAX_HTAB);
 
+    /* validate port numbers */
     if (irc_port < 1 || irc_port > 65535) error("invalid irc-port.");
     if (ss_port < 1 || ss_port > 65535) error("invalid ss-port.");
 
+    /* launch threads for listening irc server and bot server */
     pthread_create(&pt_irc, NULL, run_irc_srv, (void *) &irc_port);
     pthread_create(&pt_ss, NULL, run_ss_srv, (void *) &ss_port);
 
+    /* wait for all threads to complete  before continuing */
     pthread_join(pt_irc, NULL);
     pthread_join(pt_ss, NULL);
 }
@@ -69,21 +73,27 @@ int main(int argc, char **argv) {
     extern char *optarg;
     extern int optind;
     
+    /* parse all command line arguments */
     while (1) {
         int option_index = 0;
 
+        /* parse the next argument based on specified possible arguments */
         next_arg = getopt_long_only(argc, argv, "p:s:hv", long_options, &option_index);
 
+        /* done parsing arguments, move on */
         if (next_arg == -1) break;
 
         switch(next_arg) {
+            /* set listening irc server port */
             case 'p': irc_port = atoi(optarg); break;
+            /* set listening bot server port */
             case 's': ss_port = atoi(optarg); break;
             case 'v': print_version(); break;
             case 'h': default: print_help(); break;
         }
     }
 
+    /* both irc server and bot server ports are required arguments */
     if (irc_port == 0 || ss_port == 0) print_help();
 
     run_ircssd(irc_port, ss_port);

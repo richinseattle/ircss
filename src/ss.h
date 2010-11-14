@@ -19,15 +19,16 @@
 #ifndef _SS_H_
 #define _SS_H_
 
+// counter for the number of users that have connected
 extern int user_fd;
 
 /*
- * Parses messages from the client.
+ * Parses messages from a bot.
  */
 void ss_read(int cli_sockfd);
 
 /*
- * Sends a message to all users.
+ * Sends a message to a bot.
  */
 void ss_write(int cli_sockfd, char *msg);
 

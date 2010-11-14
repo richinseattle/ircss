@@ -32,9 +32,11 @@
  * generic sockaddr.
  */
 void *get_in_addr(struct sockaddr *sa) {
+    /* IPv4 */
     if (sa->sa_family == AF_INET)
         return &(((struct sockaddr_in*)sa)->sin_addr);
 
+    /* IPv6 */
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
@@ -53,44 +55,59 @@ int get_srv_sock(int port) {
     struct addrinfo hints, *res, *res0;
     struct sigaction sa;
 
+    /* populate hints as a family-inspecific (ipv4/ipv6) stream socket (tcp)
+       suitable for binding on a listening port (AI_PASSIVE is set) */
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
 
+    /* validate port then store as string */
     char port_str[MAX_BUF];
     if (port < 1 || port > 65535) error("invalid port.");
     snprintf(port_str, MAX_BUF, "%d", port);
+
+    /* populate the addrinfo struct res0 based on hints and port */
     err = getaddrinfo(NULL, port_str, &hints, &res0);
     if (err) error("getaddrinfo failed: %s\n", gai_strerror(err));
 
+    /* iterate through all available addresses to listen on */
     for (res = res0; res != NULL; res = res->ai_next) {
+        /* create the socket, on failure go to the next available address */
         srv_sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
         if (srv_sockfd == -1) continue;
 
+        /* set socket as reusable to allow multiple simultaneous connections */
         int reuse = 1;
         err = setsockopt(srv_sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int));
         if (err == -1) error("setsockopt failed.");
 
+        /* bind the socket to its address/port, on failure go to next addr */
         err = bind(srv_sockfd, res->ai_addr, res->ai_addrlen);
         if (err == -1) continue;
 
+        /* assume the socket is valid at this point, so break and move on */
         break;
     }
 
+    /* if all available addresses have been exhausted, fail */
     if (res == NULL) error("bind failed");
 
+    /* done with the list of available addresses, free the memory */
     freeaddrinfo(res0);
 
+    /* start listening for incoming connections on the newly built socket */
     err = listen(srv_sockfd, MAX_CONNS);
     if (err == -1) error("listen failed.");
 
+    /* handler to reap any zombie child processes */
     sa.sa_handler = sigchld_handler;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = SA_RESTART;
     err = sigaction(SIGCHLD, &sa, NULL);
     if (err == -1) error("sigaction failed");
 
+    /* return the listening socket */
     return srv_sockfd;
 }
 
@@ -102,9 +119,11 @@ int get_cli_sock(int srv_sockfd) {
     struct sockaddr_storage cli_addr;
     int cli_len = sizeof(cli_addr);
 
+    /* accept a new incoming connection on the listening srv_sockfd */
     cli_sockfd = accept(srv_sockfd, (struct sockaddr *) &cli_addr, &cli_len);
     if (cli_sockfd == -1) error("accept failed.");
 
+    /* return the socket between the listening server and new client */
     return cli_sockfd;
 }
 
@@ -115,31 +134,42 @@ int get_conn_sock(char *addr, int port) {
     int conn_sockfd, err;
     struct addrinfo hints, *res, *res0;
 
+    /* populate hints as a family-inspecific (ipv4/ipv6) stream socket (tcp)
+       suitable for connecting to a given address  (AI_PASSIVE not set) */
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_PASSIVE;
 
+    /* validate port then store as string */
     char port_str[MAX_BUF];
     if (port < 1 || port > 65535) error("invalid port.");
     snprintf(port_str, MAX_BUF, "%d", port);
-    err = getaddrinfo(NULL, port_str, &hints, &res0);
+
+    /* populate the addrinfo struct res0 based on hints, addr and port */
+    err = getaddrinfo(addr, port_str, &hints, &res0);
     if (err) error("getaddrinfo failed: %s\n", gai_strerror(err));
 
+    /* iterate through all available addresses to connect to */
     for (res = res0; res != NULL; res = res->ai_next) {
+        /* create the socket, on failure go to the next available address */
         conn_sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
         if (conn_sockfd == -1) continue;
 
+        /* establish a connection to the remote address */
         err = connect(conn_sockfd, res->ai_addr, res->ai_addrlen);
         if (err == -1) continue;
 
+        /* assume the socket is valid at this point, so break and move on */
         break;
     }
 
+    /* if all available addresses have been exhausted, fail */
     if (res == NULL) error("connect failed.");
 
+    /* done with the list of available addresses, free the memory */
     freeaddrinfo(res0);
 
+    /* return the connected socket */
     return conn_sockfd;
 }
 

@@ -24,18 +24,21 @@
 #include "core.h"
 
 /*
- * Displays the (printf-style) given message via perror then exits as failure.
+ * Displays the printf-style formatted string via perror then exits as failure.
  */
 void error(char *fmt, ...) {
     char buf[MAX_BUF], msg[MAX_BUF];
     va_list args;
 
+    /* construct the string defined by format string fmt with its args */
     va_start(args, fmt);
     vsnprintf(buf, MAX_BUF, fmt, args);
     va_end(args);
 
+    /* final error message = 'ERROR: some string defined by fmt' */
     snprintf(msg, MAX_BUF, "ERROR: %s", buf);
 
+    /* if errno indicates a specific failure, use perror to print details */
     if (errno != 0) perror(msg);
     else fprintf(stderr, "%s\n", msg);
 
@@ -43,17 +46,19 @@ void error(char *fmt, ...) {
 }
 
 /*
- *  Displays the (printf-style) given message on stderr.
+ * Displays the printf-style formatted string on stderr.
  */
 void debug(char *fmt, ...) {
     if (DEBUG) {
         char buf[MAX_BUF];
         va_list args;
 
+        /* construct the string defined by format string fmt with its args */
         va_start(args, fmt);
         vsnprintf(buf, MAX_BUF, fmt, args);
         va_end(args);
 
+        /* final debug message = 'DEBUG: some string defined by fmt' */
         fprintf(stderr, "DEBUG: %s", buf);
     }
 }

@@ -20,12 +20,12 @@
 #define _MISC_H_
 
 /*
- * Displays the (printf-style) given message via perror then exits as failure.
+ * Displays the printf-style formatted string via perror then exits as failure.
  */
 void error(char *fmt, ...);
 
 /*
- *  Displays the (printf-style) given message on stderr.
+ * Displays the printf-style formatted string on stderr.
  */
 void debug(char *fmt, ...);
 
