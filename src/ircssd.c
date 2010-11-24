@@ -22,6 +22,7 @@
 #include <limits.h>
 #include <string.h>
 #include <search.h>
+#include <pthread.h>
 #include "core.h"
 #include "irc.h"
 #include "ss.h"

@@ -21,6 +21,7 @@
 #include <string.h>
 #include <netinet/in.h>
 #include <search.h>
+#include <pthread.h>
 #include "core.h"
 #include "sock.h"
 #include "irc.h"

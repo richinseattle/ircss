@@ -24,6 +24,7 @@
 #include <netdb.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <netinet/in.h>
 #include "core.h"
 #include "sock.h"
 

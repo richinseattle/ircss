@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <search.h>
+#include <pthread.h>
 #include "core.h"
 #include "sock.h"
 #include "irc.h"
