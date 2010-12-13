@@ -27,15 +27,11 @@
  */
 void *get_in_addr(struct sockaddr *sa);
 
-/*
- * Child process handler, used to avoid zombie child processes.
- */
-void sigchld_handler(int s);
 
 /*
  * Establishes a listening socket on the specified port and returns the sockfd.
  */
-int get_srv_sock(int port);
+int get_srv_sock(int port, int family);
 
 /*
  * Creates a socket for an incoming client connection and returns the sockfd.

@@ -42,16 +42,9 @@ void *get_in_addr(struct sockaddr *sa) {
 }
 
 /*
- * Child process handler, used to avoid zombie child processes.
- */
-void sigchld_handler(int s) {
-    while (waitpid(-1, NULL, WNOHANG) > 0);
-}
-
-/*
  * Establishes a listening socket on the specified port and returns the sockfd.
  */
-int get_srv_sock(int port) {
+int get_srv_sock(int port, int family) {
     int srv_sockfd, err;
     struct addrinfo hints, *res, *res0;
     struct sigaction sa;
@@ -59,13 +52,13 @@ int get_srv_sock(int port) {
     /* populate hints as a family-inspecific (ipv4/ipv6) stream socket (tcp)
        suitable for binding on a listening port (AI_PASSIVE is set) */
     memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_UNSPEC;
+    hints.ai_family = family;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
 
     /* validate port then store as string */
     char port_str[MAX_BUF];
-    if (port < 1 || port > 65535) error("invalid port.");
+    if (port < 1 || port > 65535) error("invalid port");
     snprintf(port_str, MAX_BUF, "%d", port);
 
     /* populate the addrinfo struct res0 based on hints and port */
@@ -80,8 +73,17 @@ int get_srv_sock(int port) {
 
         /* set socket as reusable to allow multiple simultaneous connections */
         int reuse = 1;
-        err = setsockopt(srv_sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int));
-        if (err == -1) error("setsockopt failed.");
+        err = setsockopt(srv_sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
+        if (err == -1) error("setsockopt failed");
+
+#ifdef IPV6_V6ONLY
+        /* if socket is ipv6, disallow ipv4 connections */
+        if (res->ai_family == AF_INET6) {
+            int v6only = 1;
+            err = setsockopt(srv_sockfd, IPPROTO_IPV6, IPV6_V6ONLY, &v6only, sizeof(v6only));
+            if (err == -1) error("setsockopt failed");
+        }
+#endif
 
         /* bind the socket to its address/port, on failure go to next addr */
         err = bind(srv_sockfd, res->ai_addr, res->ai_addrlen);
@@ -99,14 +101,7 @@ int get_srv_sock(int port) {
 
     /* start listening for incoming connections on the newly built socket */
     err = listen(srv_sockfd, MAX_CONNS);
-    if (err == -1) error("listen failed.");
-
-    /* handler to reap any zombie child processes */
-    sa.sa_handler = sigchld_handler;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = SA_RESTART;
-    err = sigaction(SIGCHLD, &sa, NULL);
-    if (err == -1) error("sigaction failed");
+    if (err == -1) error("listen failed");
 
     /* return the listening socket */
     return srv_sockfd;
@@ -122,7 +117,7 @@ int get_cli_sock(int srv_sockfd) {
 
     /* accept a new incoming connection on the listening srv_sockfd */
     cli_sockfd = accept(srv_sockfd, (struct sockaddr *) &cli_addr, &cli_len);
-    if (cli_sockfd == -1) error("accept failed.");
+    if (cli_sockfd == -1) error("accept failed");
 
     /* return the socket between the listening server and new client */
     return cli_sockfd;
@@ -143,7 +138,7 @@ int get_conn_sock(char *addr, int port) {
 
     /* validate port then store as string */
     char port_str[MAX_BUF];
-    if (port < 1 || port > 65535) error("invalid port.");
+    if (port < 1 || port > 65535) error("invalid port");
     snprintf(port_str, MAX_BUF, "%d", port);
 
     /* populate the addrinfo struct res0 based on hints, addr and port */
@@ -165,7 +160,7 @@ int get_conn_sock(char *addr, int port) {
     }
 
     /* if all available addresses have been exhausted, fail */
-    if (res == NULL) error("connect failed.");
+    if (res == NULL) error("connect failed");
 
     /* done with the list of available addresses, free the memory */
     freeaddrinfo(res0);

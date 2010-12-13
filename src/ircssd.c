@@ -57,8 +57,8 @@ void run_ircssd(int irc_port, int ss_port) {
     hcreate(MAX_HTAB);
 
     /* validate port numbers */
-    if (irc_port < 1 || irc_port > 65535) error("invalid irc-port.");
-    if (ss_port < 1 || ss_port > 65535) error("invalid ss-port.");
+    if (irc_port < 1 || irc_port > 65535) error("invalid irc-port");
+    if (ss_port < 1 || ss_port > 65535) error("invalid ss-port");
 
     /* launch threads for listening irc server and bot server */
     pthread_create(&pt_irc, NULL, run_irc_srv, (void *) &irc_port);
@@ -70,7 +70,7 @@ void run_ircssd(int irc_port, int ss_port) {
 }
 
 int main(int argc, char **argv) {
-    int next_arg, irc_port, ss_port;
+    int next_arg, irc_port = 0, ss_port = 0;
     extern char *optarg;
     extern int optind;
     

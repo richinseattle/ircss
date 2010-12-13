@@ -43,7 +43,7 @@ void reg_conn(int cli_sockfd, user_t *user) {
         /* read next message from the user */
         memset(&buf, 0, sizeof(buf));
         err = read(cli_sockfd, buf, MAX_BUF);
-        if (err == -1) error("read failed.");
+        if (err == -1) error("read failed");
 
         /* get the first word (up to first space or comma) */
         tok = strtok(buf, " ,");
@@ -112,7 +112,7 @@ void reg_conn(int cli_sockfd, user_t *user) {
     /* send preamble to user's irc client */
     for (i = 0; i < sizeof(preamble) / MAX_BUF; i++) {
         err = write(cli_sockfd, preamble[i], strlen(preamble[i]));
-        if (err == -1) error("write failed.");
+        if (err == -1) error("write failed");
     }
 }
 
@@ -128,7 +128,7 @@ void cli_read(int cli_sockfd) {
         /* attempt to read the next incoming message */
         memset(&buf, 0, sizeof(buf));
         err = read(cli_sockfd, buf, MAX_BUF);
-        if (err == -1) error("read failed.");
+        if (err == -1) error("read failed");
         /* user has disconnected */
         else if (err == 0) break;
 
@@ -218,7 +218,7 @@ void cli_write(int cli_sockfd, char *msg) {
     snprintf(buf, MAX_BUF, ":%s!~%s@%s PRIVMSG %s :%s", BOT_NICK, BOT_USER, BOT_HOST, CHANNEL, msg);
 
     err = write(cli_sockfd, buf, strlen(buf));
-    if (err == -1) error("write failed.");
+    if (err == -1) error("write failed");
 }
 
 /*
@@ -264,7 +264,9 @@ void *run_irc_srv(void *ptr) {
     pthread_t pt_read;
 
     /* start a listening server on given port */
-    srv_sockfd = get_srv_sock(port);
+    /* socket is hard-coded to AF_INET (ipv4) until an elegant solution can be
+       implemented to support ipv4/ipv6 simultaneously on OpenBSD */
+    srv_sockfd = get_srv_sock(port, AF_INET);
 
     /* listen indefinitely for new users to connect */
     while (1) {
@@ -277,7 +279,7 @@ void *run_irc_srv(void *ptr) {
         ENTRY item;
 
         /* construct connection hashtable key for this user, userN */
-        sprintf(key, "user%d", user_fd);
+        snprintf(key, MAX_BUF, "user%d", user_fd);
 
         /* construct connection hashtable value, a user_t containing the sock */
         data.sockfd = cli_sockfd;

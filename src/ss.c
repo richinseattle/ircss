@@ -41,7 +41,7 @@ void ss_read(int cli_sockfd) {
         /* attempt to read the next incoming message */
         memset(&buf, 0, sizeof(buf));
         err = read(cli_sockfd, buf, MAX_BUF);
-        if (err == -1) error("read failed.");
+        if (err == -1) error("read failed");
         /* bot has disconnected */
         else if (err == 0) break;
 
@@ -94,7 +94,7 @@ void ss_write(int cli_sockfd, char *msg) {
 
     /* send given string to specified socket */
     err = write(cli_sockfd, msg, strlen(msg));
-    if (err == -1) error("write failed.");
+    if (err == -1) error("write failed");
 }
 
 /*
@@ -118,7 +118,9 @@ void *run_ss_srv(void *ptr) {
     pthread_t pt_read;
 
     /* establish a listening socket  on given port */
-    srv_sockfd = get_srv_sock(port);
+    /* socket is hard-coded to AF_INET (ipv4) until an elegant solution can be
+       implemented to support ipv4/ipv6 simultaneously on OpenBSD */
+    srv_sockfd = get_srv_sock(port, AF_INET);
 
     /* listen indefinitely for new bots to connect */
     while (1) {
