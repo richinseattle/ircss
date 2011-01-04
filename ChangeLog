@@ -13,3 +13,6 @@ ircss 0.1.2
 More code cleanup and comments, fixed a bug that made it impossible for the bot
 to connect to a server other than localhost.
 
+ircss 0.1.3
+---------
+OpenBSD fixes, automated versioning via automake (reads from ./VERSION).
