@@ -3,7 +3,7 @@
 
 m4_define([VERSION_NUMBER], [esyscmd([. ./VERSION; echo -n $VERSION])])
 m4_syscmd([. ./VERSION; tail -n +2 README > README.tmp; echo ircss $VERSION > README; cat README.tmp >> README; rm README.tmp])
-m4_syscmd([. ./VERSION; cat ChangeLog | grep "ircss $VERSION" >/dev/null || echo -e "\nircss $VERSION\n---------\n" >> ChangeLog])
+m4_syscmd([. ./VERSION; cat ChangeLog | grep "ircss $VERSION" >/dev/null || /bin/echo -e "\nircss $VERSION\n---------\n" >> ChangeLog])
 AC_PREREQ(2.61)
 AC_INIT([ircss],[VERSION_NUMBER],[bugs@ircss.org])
 AM_INIT_AUTOMAKE()
