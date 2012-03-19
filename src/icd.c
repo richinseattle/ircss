@@ -106,7 +106,9 @@ int main(int argc, char **argv) {
         int option_index = 0;
 
         /* parse the next argument based on specified possible arguments */
-        next_arg = getopt_long_only(argc, argv, "p:a:hv", long_options, &option_index); /* done parsing arguments, move on */
+        next_arg = getopt_long_only(argc, argv, "p:a:hv", long_options, &option_index);
+        
+        /* done parsing arguments, move on */
         if (next_arg == -1) break;
 
         switch(next_arg) {
