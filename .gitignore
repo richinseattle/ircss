@@ -15,3 +15,11 @@ config.status
 src/.deps/
 src/Makefile
 stamp-h1
+src/icd
+src/icd.o
+src/irc.o
+src/ircssd
+src/ircssd.o
+src/misc.o
+src/sock.o
+src/ss.o
