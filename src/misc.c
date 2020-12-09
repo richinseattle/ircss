@@ -40,7 +40,7 @@ void error(char *fmt, ...) {
 
     /* if errno indicates a specific failure, use perror to print details */
     if (errno != 0) perror(msg);
-    else fprintf(stderr, "%s\n", msg);
+//    else fprintf(stderr, "%s\n", msg);
 
     exit(EXIT_FAILURE);
 }
@@ -59,7 +59,7 @@ void debug(char *fmt, ...) {
         va_end(args);
 
         /* final debug message = 'DEBUG: some string defined by fmt' */
-        fprintf(stderr, "DEBUG: %s", buf);
+//        fprintf(stderr, "DEBUG: %s", buf);
     }
 }
 

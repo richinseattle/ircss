@@ -18,9 +18,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <search.h>
 #include <pthread.h>
+#include <sys/types.h>
 #include "core.h"
 #include "sock.h"
 #include "irc.h"
@@ -32,18 +34,20 @@ int bot_fd = 0;
 /*
  * Parses messages from a bot.
  */
-void ss_read(int cli_sockfd) {
+//void ss_read(int cli_sockfd) {
+int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
     int err, i;
     char buf[MAX_BUF], cmd[MAX_BUF], args[MAX_BUF], msg[MAX_BUF];
 
     /* listen indefinitely for incoming messages */
-    while (1) {
+//    while (1) {
         /* attempt to read the next incoming message */
         memset(&buf, 0, sizeof(buf));
-        err = read(cli_sockfd, buf, MAX_BUF);
-        if (err == -1) error("read failed");
+//        err = read(cli_sockfd, buf, MAX_BUF);
+        memcpy(buf, Data, MAX_BUF);
+        //if (err == -1) error("read failed");
         /* bot has disconnected */
-        else if (err == 0) break;
+        //else if (err == 0) break;
 
         /* parse message as a single command followed by arguments */
         sscanf(buf, "%s %[^\n]", cmd, args);
@@ -80,7 +84,7 @@ void ss_read(int cli_sockfd) {
                 else debug("socket not found.\n");
             }
         }
-    }
+//    }
 }
 
 /*
@@ -105,7 +109,7 @@ void *run_ss_cli(void *ptr) {
     int cli_sockfd = *cli_sockfd_ptr;
 
     /* start reading messages from the bot on the specified socket */
-    ss_read(cli_sockfd);
+    //ss_read(cli_sockfd);
 }
 
 /*
